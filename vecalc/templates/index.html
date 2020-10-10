@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>vecalc</title>
+    <link href="/static/style.css" rel="stylesheet" type="text/css">
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js">
+    </script>
+    <script type="text/javascript">
+        $(function() {
+            $("a#process_input").bind("click", function() {
+                $.getJSON("/_process", {
+                    g_k: $('input[name="g_k"]').val(),
+                    q_k: $('input[name="q_k"]').val(),
+                    l: $('input[name="l"]').val(),
+                    h: $('input[name="h"]').val(),
+                    n_1: $('input[name="n_1"]').val(),
+                    n_2: $('input[name="n_2"]').val(),
+                    fi_1: $('input[name="fi_1"]').val(),
+                    fi_2: $('input[name="fi_2"]').val(),
+                    fi_r: $('input[name="fi_r"]').val(),
+                    s: $('input[name="s"]').is(':checked'),
+                }, function(data) {
+                    $("#result").html(data.result);
+                });
+                return false;
+            });
+        });
+    </script>
+</head>
+<body>
+    <form>
+        <p><b>Obciążenie charakterystyczne równomiernie rozłożone:</b><br>
+        - stałe <input type="number" step="0.1" name="g_k" value="2.5"> kN/m&#178;<br>
+        - zmienne <input type="number" step="0.1" name="q_k" value="2.0"> kN/m&#178;
+        <p><b>Geometria stropu:</b><br>
+        - rozpiętość w świetle
+        <input type="number" step="0.1" name="l" value="2.8" min="1"> m<br>
+        - grubość całkowita
+        <input type="number" name="h" value="15" min="15" max="24"> cm
+        <input type="checkbox" id="s" name="s">
+        <label for="s">wkłady styropianowe</label><br>
+        <p><b>Zbrojenie rozciągane:</b><br>
+        - <input type="number" step="2" name="n_1" value="2" min="2" max="4"> szt.
+        # <input type="number" step="2" name="fi_1" value="8" min="6" max="14"> mm
+        na całej długości<br>
+        - <input type="number" step="2" name="n_2" value="0" min="0" max="2"> szt.
+        # <input type="number" step="2" name="fi_2" value="8" min="6" max="14"> mm
+        dospawane do kratownicy
+        <p><b>Zbrojenie rozdzielcze:</b><br>
+        # <input type="number" name="fi_r" value="6" min="4" max="8"> mm
+        <p><a href="#" id="process_input"><button>Oblicz</button></a>
+    </form>
+    <p id="result"></p>
+</body>
+</html>
