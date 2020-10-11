@@ -40,16 +40,17 @@ ts = 5  # wiek betonu na końcu okresu pielęgnacji w dniach
 t0 = 28  # wiek betonu w chwili przyłożenia obciążenia
 RH = 80  # wilgotność powietrza zewnętrznego w procentach
 
-# Geometria
-t_f = 45 * mm  # grubość płyty prefabrykowanej
-b_w = 16 * cm  # odstęp między licami wkładów styropianowych
+# Geometria i wkłady styropianowe
+h_p = 45 * mm  # grubość płyty prefabrykowanej
+b_w = 16 * cm  # szerokość żebra usztywniającego (odstęp pomiędzy licami wkładów)
+b_st = 5 * cm  # odstęp pomiędzy krawędzią płyty i licem wkładu styropianowego
 
 
-def h_s(h: float) -> float:
+def h_st(h: float) -> float:
     """Zwraca wysokość wkładu styropianowego w zależności od grubości stropu."""
-    if h in (20 * cm, 22 * cm):
+    if h >= 20 * cm:
         return 10 * cm
-    elif h == 24 * cm:
+    elif h >= 23 * cm:
         return 12 * cm
     else:
         raise Exception("Nie zdefiniowano wysokości wkładu do podanej grubości stropu.")
@@ -57,7 +58,9 @@ def h_s(h: float) -> float:
 
 # Kratownice stalowe FILIGRAN typ E
 h_k = lambda h: (14 * cm if h >= 20 * cm else 10 * cm)
+n_k = lambda b: (int(ceil(b / cm / 60)))
 fi_g = 10 * mm
+fi_k = 5 * mm
 fi_d = 5 * mm
 
 # Odwrotna strzałka ugięcia (p. 8 [3])
@@ -70,6 +73,7 @@ def oblicz(
     g_k: float,
     q_k: float,
     l: float,
+    b: float,
     h: float,
     n_1: int,
     n_2: int,
@@ -79,17 +83,17 @@ def oblicz(
     s: bool,
 ) -> (str, str):
     """Wymiarowanie zbrojenia do schematu belki jednoprzęsłowej, swobodnie podpartej."""
-    b = 60 * cm  # podstawowy moduł szerokości płyt prefabrykowanych
+    b_p = round(b / cm)
     warn = ""
-    if n_2 not in [0, 2]:
-        raise Exception("Dopuszczalne 0 lub 2 pręty dospawane do kratownicy.")
+    if n_2 not in [0, n_k(b) * 2]:
+        raise Exception("Dopuszczalne 0 lub 2 pręty dospawane do jednej kratownicy.")
 
     # Statyka
     g_k, q_k = b * g_k, b * q_k  # przeliczenie obciążenia na metr bieżący przekroju
     if s == "true":  # dodanie ciężaru własnego do obciążeń stałych
-        g_k += 25 * kPa * (h * b - (b - b_w - 10 * cm) * h_s(h))
+        g_k += 24.5 * kPa * (h * b - (b - n_k(b) * b_w - 2 * b_st) * h_st(h))
     else:
-        g_k += 25 * kPa * h * b
+        g_k += 24.5 * kPa * h * b
     p = max(g_k * 1.35 + q_k * 1.5 * 0.7, g_k * 1.35 * 0.85 + q_k * 1.5)  # 6.10a/b [1]
     p_q = g_k + q_k * 0.3  # 6.16b [1]
     l_eff = l + 8 * cm  # (p. 8 [3])
@@ -124,12 +128,14 @@ def oblicz(
 
     # Wkłady styropianowe (zastępcza szerokość z równości momentów bezwładności [7])
     if s == "true":
+        if n_k(b) == 1 and (b - b_w - 2 * b_st) / 2 < max(h_st(h), 85 * mm):
+            raise Exception("Nie można stosować wkładów do podanej grubości stropu.")
         A_c = b * h
         y_c = h / 2
         J_c = b * h ** 3 / 12
-        A_st = (b - b_w) * h_s(h)
-        y_st = t_f + h_s(h) / 2
-        J_st = (b - b_w) * h_s(h) ** 3 / 12
+        A_st = (b - n_k(b) * b_w - 2 * b_st) * h_st(h)
+        y_st = h_p + h_st(h) / 2
+        J_st = (b - n_k(b) * b_w - 2 * b_st) * h_st(h) ** 3 / 12
         y = (A_c * y_c - A_st * y_st) / (A_c - A_st)
         J_z = J_c - J_st + A_c * (y_c - y) ** 2 - A_st * (y_st - y) ** 2
         b = 12 * J_z / h ** 3
@@ -139,14 +145,15 @@ def oblicz(
     if mi > mi_lim:
         warn += "<font color=red>Przekroczno wartość graniczną mi.<br>"
     omega = 0.9731 - sqrt(0.9469 - 1.946 * mi)
+    A_c = A_c - A_st if s == "true" else b * d
     A_s_req = max(
-        omega * b * d * (f_cd / f_yd), 0.26 * f_ctm / f_yk * b * d, 0.0013 * b * d
-    ) - 2 * A_s(fi_d)
-    A_s_prov = n_1 * A_s(fi_1) + n_2 * A_s(fi_2) + 2 * A_s(fi_d)
-    ro = A_s_prov / (b * d)
+        omega * A_c * (f_cd / f_yd), 0.26 * f_ctm / f_yk * A_c, 0.0013 * A_c
+    ) - n_k(b) * 2 * A_s(fi_d)
+    A_s_prov = n_1 * A_s(fi_1) + n_2 * A_s(fi_2) + n_k(b) * 2 * A_s(fi_d)
+    ro = A_s_prov / A_c
     if A_s_prov < A_s_req:
         warn += f"<font color=red>Zbyt mały stopień zbrojenia przekroju = {ro:.2%}.<br>"
-    if A_s_prov > 0.5 * f_cd / f_yd * b * d or A_s_prov > 0.04 * b * d:
+    if A_s_prov > 0.5 * f_cd / f_yd * A_c or A_s_prov > 0.04 * A_c:
         warn += f"<font color=red>Zbyt duży stopień zbrojenia przekroju = {ro:.2%}.<br>"
     M_Rd = A_s_prov * f_yd * (d - 0.5138 * ((A_s_prov * f_yd) / (b * f_cd)))
     if M_Ed > M_Rd:
@@ -213,11 +220,11 @@ def oblicz(
     # Wpływ kratownicy na zmniejszenie ugięcia (p. 8 [3])
     y_g = h_k(h) - fi_g / 2
     y_d = (fi_d + fi_2) / 4
-    A_sd = 2 * A_s(fi_d) + n_2 * A_s(fi_2)
-    y = (A_s(fi_g) * y_g + A_sd * y_d) / (A_s(fi_g) + A_sd)
-    I_g = pi * fi_g ** 4 / 64
+    A_sd = n_k(b) * 2 * A_s(fi_d) + n_2 * A_s(fi_2)
+    y = (n_k(b) * A_s(fi_g) * y_g + A_sd * y_d) / (n_k(b) * A_s(fi_g) + A_sd)
+    I_g = pi * sqrt(n_k(b) * A_s(fi_g) / pi) ** 4 / 64
     I_d = pi * sqrt(A_sd / pi) ** 4 / 64
-    I_k = I_g + I_d + A_s(fi_g) * (y_g - y) ** 2 + A_sd * (y_d - y) ** 2
+    I_k = I_g + I_d + n_k(b) * A_s(fi_g) * (y_g - y) ** 2 + A_sd * (y_d - y) ** 2
     gamma_k = max(1 - 0.9 * E_s * I_k / (E_c_eff * (b * h ** 3 / 12)), 0.85)
 
     # Warunek SLS (SGU) - Sprawdzenie ugięć (p. 7.4.1 [2])
@@ -228,15 +235,16 @@ def oblicz(
 
     # Notka
     l_p = int(ceil((l + 12 * cm) / cm / 10)) * 10
-    s_r = min(40 * cm, 1 / (0.2 * A_s_prov / A_s(fi_r)))
+    s_r = min(40 * cm, m / (0.2 * A_s_req / (b_p * cm) / A_s(fi_r)))
     return (
         (
-            f"<p><b>VECTOR {h / cm:.0f}{'s' if s == 'true' else ''} L={l_p} W=60<br>"
-            f"zbroj. {n_1:.0f}#{fi_1 / mm:.0f} "
-            f"{f'+ {n_2:.0f}#{fi_2 / mm:.0f}' if n_2 != 0 else ''}<br>"
-            f"rozdzielcze #{fi_r / mm:.0f} co {s_r / cm:.0f} cm</b>"
-            f"<p>Przyjęto: A<sub>s1</sub> = {A_s_prov / cm2:.2f} cm&#178; "
-            f"({A_s_prov / .6 / mm2:.0f} mm&#178;/m)<br>"
+            f"<h4>VECTOR {h / cm:.0f}{'s' if s == 'true' else ''} L={l_p} W={b_p}<br>"
+            f"zbroj. {n_1}#{fi_1 / mm:.0f} "
+            f"{f'+ {n_2}#{fi_2 / mm:.0f}' if n_2 != 0 else ''} + {n_k(b)} krat. "
+            f"E-{h_k(h) / cm:.0f}-0{fi_d / mm:.0f}{fi_k / mm:.0f}{fi_g / mm:.0f}<br>"
+            f"rozdzielcze #{fi_r / mm:.0f} co {s_r / cm:.0f} cm</h4>"
+            f"<p>Przyjęto: A<sub>s</sub> = {A_s_prov / cm2:.2f} cm&#178; "
+            f"({A_s_prov / (b_p * cm) / mm2:.0f} mm&#178;/m)<br>"
             f"Zginanie: M<sub>Ed</sub> = {M_Ed / kN:.1f} kNm "
             f"{'<' if M_Ed < M_Rd else '>'} "
             f"M<sub>Rd</sub> = {M_Rd / kN:.1f} kNm ({float(M_Ed/M_Rd):.1%})<br>"
@@ -246,7 +254,7 @@ def oblicz(
             f"Ugięcie: &alpha;<sub>fin</sub> = {alfa_fin / mm:.1f} mm "
             f"{'<' if alfa_fin < alfa_lim else '>'} "
             f"&alpha;<sub>lim</sub> = {alfa_lim / mm:.1f} mm "
-            f"({float(alfa_fin / alfa_lim):.1%})"
+            f"({float(alfa_fin / alfa_lim):.1%})</p>"
         ),
         warn if warn else "<font color=green>Warunki stanów granicznych spełnione.<br>",
     )

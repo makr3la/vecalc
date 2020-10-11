@@ -1,5 +1,3 @@
-"""Module with all the view (route) functions."""
-
 from flask import jsonify, render_template, request
 
 from . import app, processing as p
@@ -15,6 +13,7 @@ def _process():
     g_k = float(request.args.get("g_k")) * p.kPa
     q_k = float(request.args.get("q_k")) * p.kPa
     l = float(request.args.get("l"))
+    b = float(request.args.get("b")) * p.cm
     h = float(request.args.get("h")) * p.cm
     n_1 = int(request.args.get("n_1"))
     n_2 = int(request.args.get("n_2"))
@@ -23,6 +22,8 @@ def _process():
     fi_r = float(request.args.get("fi_r")) * p.mm
     s = request.args.get("s")
     try:
-        return jsonify(result=p.oblicz(g_k, q_k, l, h, n_1, n_2, fi_1, fi_2, fi_r, s))
+        return jsonify(
+            result=p.oblicz(g_k, q_k, l, b, h, n_1, n_2, fi_1, fi_2, fi_r, s)
+        )
     except Exception as e:
         return jsonify(result=str(e))

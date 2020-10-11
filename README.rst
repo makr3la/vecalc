@@ -31,3 +31,5 @@ Odniesienia
    Eurokodu 2" autorstwa Jana Kubickiego
 7. "Wybrane zagadnienia komputerowego modelowanie konstrukcji inżynierskich" autorstwa
    Włodzimierza Starosolskiego
+8. PN-EN 13747:2007 - Prefabrykaty z betonu - Płyty stropowe do zespolonych systemów
+   stropowych
