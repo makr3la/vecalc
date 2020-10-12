@@ -129,7 +129,7 @@ def oblicz(
     # Wkłady styropianowe (zastępcza szerokość z równości momentów bezwładności [7])
     if s == "true":
         if n_k(b) == 1 and (b - b_w - 2 * b_st) / 2 < max(h_st(h), 85 * mm):
-            raise Exception("Nie można stosować wkładów do podanej grubości stropu.")
+            raise Exception("Nie można stosować wkładów do podanej szerokości płyty.")
         A_c = b * h
         y_c = h / 2
         J_c = b * h ** 3 / 12
