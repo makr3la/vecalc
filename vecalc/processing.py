@@ -58,7 +58,7 @@ def h_st(h: float) -> float:
 
 # Kratownice stalowe FILIGRAN typ E
 h_k = lambda h: (14 * cm if h >= 20 * cm else 10 * cm)
-n_k = lambda b: (int(ceil(b / cm / 60)))
+n_k = lambda b: (ceil(b / cm / 60))
 fi_g = 10 * mm
 fi_k = 5 * mm
 fi_d = 5 * mm
@@ -234,7 +234,7 @@ def oblicz(
         warn += "<font color=orange>Dopuszczalne ugięcie przekroczone.<br>"
 
     # Notka
-    l_p = int(ceil((l + 12 * cm) / cm / 10)) * 10
+    l_p = (ceil(round(l + 12 * cm, 3) / cm / 10)) * 10
     s_r = min(40 * cm, m / (0.2 * A_s_req / (b_p * cm) / A_s(fi_r)))
     return (
         (
