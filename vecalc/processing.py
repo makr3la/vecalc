@@ -1,6 +1,6 @@
 """Moduł obliczeniowy, który przetwarza dane i sprawdza dobrany przekrój."""
 
-from math import ceil, exp, pi, sqrt
+from math import ceil, exp, pi, sqrt, atan, sin, cos, degrees as deg, radians as rad
 
 # Przeliczanie jednostek układu SI do podstawowych
 m = 1
@@ -60,8 +60,9 @@ def h_st(h: float) -> float:
 h_k = lambda h: (14 * cm if h >= 20 * cm else 10 * cm)
 n_k = lambda b: (ceil(b / cm / 60))
 fi_g = 10 * mm
-fi_k = 5 * mm
 fi_d = 5 * mm
+fi_k = 5 * mm
+s_k = 200 * mm
 
 # Odwrotna strzałka ugięcia (p. 8 [3])
 alfa_0 = lambda l_eff: (l_eff / 300 if l_eff >= 4 else 0)
@@ -113,6 +114,8 @@ def oblicz(
     f_cd = f_ck / 1.4
     f_cm = f_ck + 8 * MPa
     f_ctm = 0.3 * (f_ck / MPa) ** (2 / 3) * MPa
+    f_ctk_05 = 0.7 * f_ctm
+    f_ctd = f_ctk_05 / 1.4
     E_cm = 22 * (0.1 * f_cm / MPa) ** 0.3 * GPa
     h_0 = h / mm
     fi_RH = 1 + (1 - RH / 100) / (0.1 * (h_0) ** (1 / 3))
@@ -167,6 +170,23 @@ def oblicz(
     V_Rd_c = v_Rd_c * b * d
     if V_Ed > V_Rd_c:
         warn += "<font color=red>Element wymagający zbrojenie na ścinanie.<br>"
+
+    # Warunek ULS (SGN) - Rozwarstwienie (p. 6.2.5 [2])
+    beta = 1 if f_yd * A_s_prov / (f_cd * b) < (h - h_p) else (h - h_p) / h
+    z = 0.85 * d
+    v_Edi = beta * V_Ed / (z * b)
+    c, mi = 0.4, 0.7  # powierzchnie szorstkie, grabione
+    sigma_n = min(p_q / s_k, 0.6 * f_cd)
+    A_si = n_k(b) * 2 * A_s(fi_k)
+    A_i = b * s_k
+    a = deg(atan(s_k / 2 / h_k(h)))
+    v = 0.6 * (1 - f_ck / MPa / 250)
+    v_Rdi = min(
+        c * f_ctd + mi * sigma_n + A_si / A_i * f_yd * (mi * sin(rad(a)) + cos(rad(a))),
+        0.5 * v * f_cd,
+    )
+    if v_Edi > v_Rdi:
+        warn += "<font color=red>Warunek nośności na rozwarstwienie niespełniony.<br>"
 
     # Ugięcia w stanie zarysowania (p. 7.4.3 [2])
     alfa_e = E_s / E_c_eff
@@ -251,6 +271,9 @@ def oblicz(
             f"Ścinanie: V<sub>Ed</sub> = {V_Ed / kN:.1f} kN "
             f"{'<' if V_Ed < V_Rd_c else '>'} "
             f"V<sub>Rd,c</sub> = {V_Rd_c / kN:.1f} kN ({float(V_Ed/V_Rd_c):.1%})<br>"
+            f"Rozwarstwienie: v<sub>Edi</sub> = {v_Edi / MPa:.2f} MPa "
+            f"{'<' if v_Edi < v_Rdi else '>'} "
+            f"v<sub>Rdi</sub> = {v_Rdi / MPa:.2f} MPa ({float(v_Edi/v_Rdi):.1%})<br>"
             f"Ugięcie: &alpha;<sub>fin</sub> = {alfa_fin / mm:.1f} mm "
             f"{'<' if alfa_fin < alfa_lim else '>'} "
             f"&alpha;<sub>lim</sub> = {alfa_lim / mm:.1f} mm "
