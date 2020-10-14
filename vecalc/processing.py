@@ -80,8 +80,10 @@ def oblicz(
     s: str,
     n_1: int,
     n_2: int,
+    n_3: int,
     fi_1: float,
     fi_2: float,
+    fi_3: float,
     fi_r: float,
 ) -> (str, str):
     """Wymiarowanie zbrojenia do schematu belki jednoprzęsłowej, swobodnie podpartej."""
@@ -115,12 +117,19 @@ def oblicz(
     l_eff = l  # p. 8 [3]
     M_Ed_q = 0.125 * p_q * l_eff ** 2
 
-    # Otulina i wysokość użyteczna (p. 4.4 [2])
+    # Otulina, przyjęte zbrojenie i wysokość użyteczna (p. 4.4 [2])
     c_min_b = max(fi_1, fi_2)
     c_min = max(c_min_b, c_min_dur, 10 * mm)
     c_nom = c_min + delta_c_dev
-    a_1 = c_nom + 0.5 * max(fi_1, fi_2) + fi_r
-    d = h - a_1
+    A_s_1 = n_1 * A_s(fi_1)
+    A_s_2 = n_2 * A_s(fi_2) + n_k(b_p) * 2 * A_s(fi_d)
+    A_s_3 = n_3 * A_s(fi_3)
+    A_s_prov = A_s_1 + A_s_2 + A_s_3
+    a_1 = c_nom + fi_1 / 2 + fi_r
+    a_2 = c_nom + fi_1 / 2 + fi_r
+    a_3 = h_p + fi_3 / 2
+    a_mean = (A_s_1 * a_1 + A_s_2 * a_2 + A_s_3 * a_3) / A_s_prov
+    d = h - a_mean
 
     # Materiały (p. 3 oraz załącznik B [2])
     f_cd = f_ck / 1.4
@@ -164,7 +173,6 @@ def oblicz(
     A_s_req = max(
         omega * A_c * (f_cd / f_yd), 0.26 * f_ctm / f_yk * A_c, 0.0013 * A_c
     ) - n_k(b_p) * 2 * A_s(fi_d)
-    A_s_prov = n_1 * A_s(fi_1) + n_2 * A_s(fi_2) + n_k(b_p) * 2 * A_s(fi_d)
     ro = A_s_prov / A_c
     if A_s_prov < A_s_req:
         warn += f"<font color=red>Zbyt mały stopień zbrojenia przekroju = {ro:.2%}.<br>"
@@ -187,18 +195,20 @@ def oblicz(
     beta = 1 if f_yd * A_s_prov / (f_cd * b) < (h - h_p) else (h - h_p) / h
     z = 0.85 * d
     b_i = n_k(b_p) * b_w if s == "true" else b
-    v_Edi = beta * V_Ed / (z * b_i)
+    v_Ed_i = beta * V_Ed / (z * b_i)
     c, mi = 0.4, 0.7  # powierzchnie szorstkie, grabione
     sigma_n = min(p_q / b_i, 0.6 * f_cd)
-    A_si = n_k(b_p) * 2 * A_s(fi_k)
+    A_s_i = n_k(b_p) * 2 * A_s(fi_k)
     A_i = b_i * s_k
     a = deg(atan(s_k / 2 / h_k(h)))
     v = 0.6 * (1 - f_ck / MPa / 250)
-    v_Rdi = min(
-        c * f_ctd + mi * sigma_n + A_si / A_i * f_yd * (mi * sin(rad(a)) + cos(rad(a))),
+    v_Rd_i = min(
+        c * f_ctd
+        + mi * sigma_n
+        + A_s_i / A_i * f_yd * (mi * sin(rad(a)) + cos(rad(a))),
         0.5 * v * f_cd,
     )
-    if v_Edi > v_Rdi:
+    if v_Ed_i > v_Rd_i:
         warn += "<font color=red>Warunek nośności na rozwarstwienie niespełniony.<br>"
 
     # Ugięcia w stanie zarysowania (p. 7.4.3 [2])
@@ -253,11 +263,10 @@ def oblicz(
     # Wpływ kratownicy na zmniejszenie ugięcia (p. 8 [3])
     y_g = h_k(h) - fi_g / 2
     y_d = (fi_d + fi_2) / 4
-    A_sd = n_k(b_p) * 2 * A_s(fi_d) + n_2 * A_s(fi_2)
-    y = (n_k(b_p) * A_s(fi_g) * y_g + A_sd * y_d) / (n_k(b_p) * A_s(fi_g) + A_sd)
+    y = (n_k(b_p) * A_s(fi_g) * y_g + A_s_2 * y_d) / (n_k(b_p) * A_s(fi_g) + A_s_2)
     I_g = pi * sqrt(n_k(b_p) * A_s(fi_g) / pi) ** 4 / 64
-    I_d = pi * sqrt(A_sd / pi) ** 4 / 64
-    I_k = I_g + I_d + n_k(b_p) * A_s(fi_g) * (y_g - y) ** 2 + A_sd * (y_d - y) ** 2
+    I_d = pi * sqrt(A_s_2 / pi) ** 4 / 64
+    I_k = I_g + I_d + n_k(b_p) * A_s(fi_g) * (y_g - y) ** 2 + A_s_2 * (y_d - y) ** 2
     gamma_k = max(1 - 0.9 * E_s * I_k / (E_c_eff * (b * h ** 3 / 12)), 0.85)
 
     # Warunek SLS (SGU) - Sprawdzenie ugięć (p. 7.4.1 [2])
@@ -276,6 +285,7 @@ def oblicz(
             f"{f'+ {n_2}#{fi_2 / mm:.0f}' if n_2 != 0 else ''} + {n_k(b_p)} krat. "
             f"E-{h_k(h) / cm:.0f}-0{fi_d / mm:.0f}{fi_k / mm:.0f}{fi_g / mm:.0f}<br>"
             f"rozdzielcze #{fi_r / mm:.0f} co {s_r / cm:.0f} cm</h4>"
+            f"{f'<br>+ dozbrojenie na płycie {n_3}#{fi_3 / mm:.0f}' if n_3 != 0 else ''}"
             f"<p>Przyjęto: A<sub>s</sub> = {A_s_prov / cm2:.2f} cm&#178; "
             f"({A_s_prov / (b_p * cm) / mm2:.0f} mm&#178;/m)<br>"
             f"Zginanie: M<sub>Ed</sub> = {M_Ed / kN:.1f} kNm "
@@ -284,9 +294,9 @@ def oblicz(
             f"Ścinanie: V<sub>Ed</sub> = {V_Ed / kN:.1f} kN "
             f"{'<' if V_Ed < V_Rd_c else '>'} "
             f"V<sub>Rd,c</sub> = {V_Rd_c / kN:.1f} kN ({float(V_Ed/V_Rd_c):.1%})<br>"
-            f"Rozwarstwienie: v<sub>Edi</sub> = {v_Edi / MPa:.2f} MPa "
-            f"{'<' if v_Edi < v_Rdi else '>'} "
-            f"v<sub>Rdi</sub> = {v_Rdi / MPa:.2f} MPa ({float(v_Edi/v_Rdi):.1%})<br>"
+            f"Rozwarstwienie: v<sub>Edi</sub> = {v_Ed_i / MPa:.2f} MPa "
+            f"{'<' if v_Ed_i < v_Rd_i else '>'} "
+            f"v<sub>Rdi</sub> = {v_Rd_i / MPa:.2f} MPa ({float(v_Ed_i/v_Rd_i):.1%})<br>"
             f"Ugięcie: &alpha;<sub>fin</sub> = {alfa_fin / mm:.1f} mm "
             f"{'<' if alfa_fin < alfa_lim else '>'} "
             f"&alpha;<sub>lim</sub> = {alfa_lim / mm:.1f} mm "

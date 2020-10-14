@@ -19,8 +19,10 @@
                     s: $('input[name="s"]').is(':checked'),
                     n_1: $('input[name="n_1"]').val(),
                     n_2: $('input[name="n_2"]').val(),
+                    n_3: $('input[name="n_3"]').val(),
                     fi_1: $('input[name="fi_1"]').val(),
                     fi_2: $('input[name="fi_2"]').val(),
+                    fi_3: $('input[name="fi_3"]').val(),
                     fi_r: $('input[name="fi_r"]').val(),
                 }, function(data) {
                     $("#result").html(data.result);
@@ -31,11 +33,10 @@
     </script>
 </head>
 <body>
+    <h3>Kalkulator stropów Vector według Eurokodów</h3><br>
+    <h6>Copyright (c) 2020 <a href="mailto:prm.kowalski@gmail.com">Paweł Kowalski</a>
+    <a href="https://stropymalro.pl/">(Stropy Małro)</a></h6>
     <form>
-        <h3>Kalkulator stropów Vector według Eurokodów</h3><br>
-        <h6>Copyright (c) 2020 
-        <a href="mailto:prm.kowalski@gmail.com">Paweł Kowalski</a>
-        <a href="https://stropymalro.pl/">(Stropy Małro)</a></h6>
         <p><h4>Obciążenie charakterystyczne:</h4><br>
         - stałe <input type="number" step="0.1" name="g_k" value="2.5"> kN/m&#178;<br>
         - zmienne <input type="number" step="0.1" name="q_k" value="2.0"> kN/m&#178;<br>
@@ -61,12 +62,15 @@
         - <input type="checkbox" id="s" name="s">
         <label for="s">wkłady styropianowe</label><br>
         <p><h4>Zbrojenie rozciągane:</h4><br>
-        - <input type="number" step="2" name="n_1" value="2" min="0" max="8"> szt.
-        # <input type="number" step="2" name="fi_1" value="8" min="6" max="14"> mm
-        na całej długości<br>
-        - <input type="number" step="2" name="n_2" value="0" min="0" max="4"> szt.
-        # <input type="number" step="2" name="fi_2" value="8" min="6" max="14"> mm
-        dospawane do kratownicy
+        - <input type="number" step="2" name="n_1" value="2" min="0" max="8">
+        # <input type="number" step="2" name="fi_1" value="8" min="6" max="14">
+        <small>na całej długości w płycie</small><br>
+        - <input type="number" step="2" name="n_2" value="0" min="0" max="4">
+        # <input type="number" step="2" name="fi_2" value="8" min="6" max="14">
+        <small>dospawane do kratownicy</small><br>
+        - <input type="number" step="2" name="n_3" value="0" min="0" max="4">
+        # <input type="number" step="2" name="fi_3" value="8" min="6" max="14">
+        <small>dozbrojenie na płycie</small>
         <p><h4>Zbrojenie rozdzielcze:</h4><br>
         # <input type="number" name="fi_r" value="6" min="4" max="8"> mm
         <p><a href="#" id="process_input"><button>Oblicz</button></a></p>
