@@ -73,34 +73,46 @@ alfa_0 = lambda l_eff: (l_eff / 300 if l_eff >= 4 else 0)
 def oblicz(
     g_k: float,
     q_k: float,
+    kat: str,
     l: float,
     b: float,
     h: float,
+    s: str,
     n_1: int,
     n_2: int,
     fi_1: float,
     fi_2: float,
     fi_r: float,
-    s: bool,
 ) -> (str, str):
     """Wymiarowanie zbrojenia do schematu belki jednoprzęsłowej, swobodnie podpartej."""
-    b_p = round(b / cm)
+    b_p = round(b / cm)  # szerokość płyty w cm
     warn = ""
     if n_2 not in [0, n_k(b_p) * 2]:
         raise Exception("Dopuszczalne 0 lub 2 pręty dospawane do jednej kratownicy.")
 
     # Statyka
+    psi_0 = {  # tab. A 1.1 [1]
+        **dict.fromkeys(["A", "B", "C", "D", "F", "G", "S1"], 0.7),
+        **{"E": 1.0, "H": 0, "S2": 0.5},
+    }
+    psi_2 = {  # tab. A 1.1 [1]
+        **dict.fromkeys(["A", "B"], 0.3),
+        **dict.fromkeys(["C", "D", "F"], 0.6),
+        **{"E": 0.8, "G": 0.3, "H": 0, "S1": 0.2, "S2": 0.2},
+    }
     g_k, q_k = b * g_k, b * q_k  # przeliczenie obciążenia na metr bieżący przekroju
     if s == "true":  # dodanie ciężaru własnego do obciążeń stałych
         g_k += 24.5 * kPa * (h * b - (b - n_k(b_p) * b_w - 2 * b_st) * h_st(h))
     else:
         g_k += 24.5 * kPa * h * b
-    p = max(g_k * 1.35 + q_k * 1.5 * 0.7, g_k * 1.35 * 0.85 + q_k * 1.5)  # 6.10a/b [1]
-    p_q = g_k + q_k * 0.3  # 6.16b [1]
-    l_eff = l + 8 * cm  # (p. 8 [3])
+    p = max(  # 6.10a/b [1]
+        g_k * 1.35 + q_k * 1.5 * psi_0[kat], g_k * 1.35 * 0.85 + q_k * 1.5
+    )
+    p_q = g_k + q_k * psi_2[kat]  # 6.16b [1]
+    l_eff = l + 8 * cm  # p. 8 [3]
     M_Ed = 0.125 * p * l_eff ** 2
     V_Ed = 0.5 * p * l_eff
-    l_eff = l  # (p. 8 [3])
+    l_eff = l  # p. 8 [3]
     M_Ed_q = 0.125 * p_q * l_eff ** 2
 
     # Otulina i wysokość użyteczna (p. 4.4 [2])
