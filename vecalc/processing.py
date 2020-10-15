@@ -30,9 +30,9 @@ mi_lim = 0.371  # tab. 7.2 [5]
 alfa_ds1 = 4
 alfa_ds2 = 0.12
 
-# Klasa konstrukcji S4 i klasa ekspozycji XC1
-c_min_dur = 15 * mm  # otulenie ze względu na warunki środowiska (tab. 4.4N [2])
-delta_c_dev = 0 * mm  # odchyłka otulenia elementów prefabrykowanych (p. 4.4.1.3 [2])
+# Klasa konstrukcji S4 (-1 - element mający kształt płyty) i klasa ekspozycji XC1
+c_min_dur = 10 * mm  # otulenie ze względu na warunki środowiska
+delta_c_dev = 5 * mm  # odchyłka otulenia elementów prefabrykowanych
 
 # Ugięcia od skurczu
 t = 50 * 365  # wiek betonu w rozważanej chwili w dniach
