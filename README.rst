@@ -1,7 +1,7 @@
 vecalc
 ======
 
-Kalkulator stropów Vector według Eurokodów
+Kalkulator stropów VECTOR
 
     *W stropach zespolonych stosowane są trzy podejścia do obliczeń statycznych.
     Podejście tradycyjne dla stropów typu filigran, w którym niezależnie od istnienia
@@ -22,9 +22,9 @@ Odniesienia
 1. PN-EN 1990:2004 – Eurokod – Podstawy projektowania konstrukcji
 2. PN-EN 1992-1-1:2008 – Eurokod 2 – Projektowanie konstrukcji z betonu – Część 1-1
    – Reguły ogólne i reguły dla budynków
-3. "Stropy żelbetowe zespolone typu Vector – Wytyczne do projektowania, produkcji
+3. "Strop zespolony gęstożebrowy VECTOR – Wytyczne do projektowania, produkcji
    i montażu" autorstwa rzeczoznawcy budowlanego Jana Lorkowskiego
-4. "Stropy Vector – Koncepcja, kształtowanie, obliczanie, wykonawstwo" autorstwa
+4. "Stropy VECTOR – Koncepcja, kształtowanie, obliczanie, wykonawstwo" autorstwa
    Łukasza Drobca
 5. "Obliczanie konstrukcji żelbetowych według Eurokodu 2" autorstwa Michała Knauffa
 6. "Wpływ skurczu na ugięcie długotrwałe zginanych elementów żelbetowych według

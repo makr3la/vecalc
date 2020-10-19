@@ -22,3 +22,8 @@ input {
 input[type="checkbox"] {
     width: 14px;
 }
+
+button {
+  width: 300px;
+  padding: 10px;
+}

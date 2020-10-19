@@ -88,6 +88,7 @@ def oblicz(
 ) -> (str, str):
     """Wymiarowanie zbrojenia do schematu belki jednoprzęsłowej, swobodnie podpartej."""
     b_p = round(b / cm)  # szerokość płyty w cm
+    p_k = (g_k + q_k) / kPa  # całkowite char. obciążenie ponad ciężar własny w kN/m2
     warn = ""
     if n_2 not in [0, n_k(b_p) * 2]:
         raise Exception("Dopuszczalne 0 lub 2 pręty dospawane do jednej kratownicy.")
@@ -188,8 +189,10 @@ def oblicz(
     v_min = 0.035 * sqrt(k ** 3 * f_ck / MPa) * MPa
     v_Rd_c = max(v_Rd_c, v_min)
     V_Rd_c = v_Rd_c * b * d
-    if V_Ed > V_Rd_c:
-        warn += "<font color=red>Element wymagający zbrojenie na ścinanie.<br>"
+    if V_Ed > V_Rd_c and h >= 20 * cm:
+        warn += "<font color=orange>Element wymagający zbrojenie na ścinanie.<br>"
+    elif V_Ed > V_Rd_c and h < 20 * cm:
+        warn += "<font color=red>Warunek nośności na ścinanie niespełniony.<br>"
 
     # Warunek ULS (SGN) - Rozwarstwienie (p. 6.2.5 [2])
     beta = 1 if f_yd * A_s_prov / (f_cd * b) < (h - h_p) else (h - h_p) / h
@@ -280,24 +283,25 @@ def oblicz(
     s_r = min(40 * cm, m / (0.2 * A_s_req / (b_p * cm) / A_s(fi_r)))
     return (
         (
-            f"<h4>VECTOR {h / cm:.0f}{'s' if s == 'true' else ''} L={l_p} W={b_p}<br>"
-            f"zbroj. {n_1}#{fi_1 / mm:.0f} "
-            f"{f'+ {n_2}#{fi_2 / mm:.0f}' if n_2 != 0 else ''} + {n_k(b_p)} krat. "
-            f"E-{h_k(h) / cm:.0f}-0{fi_d / mm:.0f}{fi_k / mm:.0f}{fi_g / mm:.0f}<br>"
-            f"rozdzielcze #{fi_r / mm:.0f} co {s_r / cm:.0f} cm</h4>"
-            f"{f'<br>+ dozbrojenie na płycie {n_3}#{fi_3 / mm:.0f}' if n_3 != 0 else ''}"
-            f"<p>Przyjęto: A<sub>s</sub> = {A_s_prov / cm2:.2f} cm&#178; "
-            f"({A_s_prov / (b_p * cm) / mm2:.0f} mm&#178;/m)<br>"
-            f"Zginanie: M<sub>Ed</sub> = {M_Ed / kN:.1f} kNm "
+            f"<h4><mark>VECTOR {h / cm:.0f}{'s' if s == 'true' else ''} L={l_p} "
+            f"W={b_p} ({p_k:.1f} kN/m2)<br>zbroj. {n_1}#{fi_1 / mm:.0f} "
+            f"{f'+ {n_2}#{fi_2 / mm:.0f}' if n_2 != 0 else ''}<br></mark>"
+            f"{f'dozbrojenie na płycie {n_3}#{fi_3 / mm:.0f}<br>' if n_3 != 0 else ''}"
+            f"rozdzielcze #{fi_r / mm:.0f} co {s_r / cm:.0f} cm <br>{n_k(b_p)} krat. "
+            f"E-{h_k(h) / cm:.0f}-0{fi_d / mm:.0f}{fi_k / mm:.0f}{fi_g / mm:.0f}</h4>"
+            f"<p><h4>WYMIAROWANIE WG EUROKODÓW</h4><br>"
+            f"A<sub>s</sub> = {A_s_prov / cm2:.2f} cm&#178; "
+            f"({A_s_prov / (b_p * cm) / mm2:.0f} mm&#178;/m) &rho; = {ro:.2%}<br>"
+            f"M<sub>Ed</sub> = {M_Ed / kN:.1f} kNm "
             f"{'<' if M_Ed < M_Rd else '>'} "
             f"M<sub>Rd</sub> = {M_Rd / kN:.1f} kNm ({float(M_Ed/M_Rd):.1%})<br>"
-            f"Ścinanie: V<sub>Ed</sub> = {V_Ed / kN:.1f} kN "
+            f"V<sub>Ed</sub> = {V_Ed / kN:.1f} kN "
             f"{'<' if V_Ed < V_Rd_c else '>'} "
             f"V<sub>Rd,c</sub> = {V_Rd_c / kN:.1f} kN ({float(V_Ed/V_Rd_c):.1%})<br>"
-            f"Rozwarstwienie: v<sub>Edi</sub> = {v_Ed_i / MPa:.2f} MPa "
+            f"v<sub>Edi</sub> = {v_Ed_i / MPa:.2f} MPa "
             f"{'<' if v_Ed_i < v_Rd_i else '>'} "
             f"v<sub>Rdi</sub> = {v_Rd_i / MPa:.2f} MPa ({float(v_Ed_i/v_Rd_i):.1%})<br>"
-            f"Ugięcie: &alpha;<sub>fin</sub> = {alfa_fin / mm:.1f} mm "
+            f"&alpha;<sub>fin</sub> = {alfa_fin / mm:.1f} mm "
             f"{'<' if alfa_fin < alfa_lim else '>'} "
             f"&alpha;<sub>lim</sub> = {alfa_lim / mm:.1f} mm "
             f"({float(alfa_fin / alfa_lim):.1%})</p>"
