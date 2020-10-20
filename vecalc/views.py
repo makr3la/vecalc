@@ -22,7 +22,7 @@ def _dobierz():
     s = request.args.get("s")
     b_p = round(b / p.cm)
     n_1 = ceil(((b_p - p.n_k(b_p) * 6) / 18 - p.n_k(b_p)) / 2) * 2
-    n_2 = [0, p.n_k(b_p) * 2]
+    n_2 = p.n_k(b_p) * 2
     types = [
         (fi_1 * p.mm, fi_2 * p.mm)
         for (fi_1, fi_2) in [
@@ -38,7 +38,7 @@ def _dobierz():
         ]
     ]
     try:
-        for (fi_1, fi_2), n_2 in product(types, n_2):
+        for n_1, (fi_1, fi_2), n_2 in product([n_1, 2 * n_1], types, [0, n_2]):
             result = p.wymiarowanie(
                 g_k, q_k, kat, l, b, h, s, n_1, n_2, 0, fi_1, fi_2, 0, 6 * p.mm
             )
