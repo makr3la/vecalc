@@ -41,7 +41,6 @@ t0 = 28  # wiek betonu w chwili przyłożenia obciążenia
 RH = 80  # wilgotność powietrza zewnętrznego w procentach
 
 # Geometria i wkłady styropianowe
-h_p = 45 * mm  # grubość płyty prefabrykowanej
 b_w = 16 * cm  # szerokość żebra usztywniającego (odstęp pomiędzy licami wkładów)
 b_st = 5 * cm  # odstęp pomiędzy krawędzią płyty i licem wkładu styropianowego
 
@@ -119,9 +118,10 @@ def wymiarowanie(
     M_Ed_q = 0.125 * p_q * l_eff ** 2
 
     # Otulina, przyjęte zbrojenie i wysokość użyteczna (p. 4.4 [2])
-    c_min_b = max(fi_1, fi_2)
+    c_min_b = max(fi_1, fi_2) - fi_r
     c_min = max(c_min_b, c_min_dur, 10 * mm)
     c_nom = c_min + delta_c_dev
+    h_p = max(45 * mm, c_nom + 2 * fi_1 + fi_r, c_nom + fi_2 + 10 * mm + fi_r)
     A_s_1 = n_1 * A_s(fi_1)
     A_s_2 = n_2 * A_s(fi_2) + n_k(b_p) * 2 * A_s(fi_d)
     A_s_3 = n_3 * A_s(fi_3)
