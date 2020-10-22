@@ -24,6 +24,10 @@ input[type="checkbox"] {
 }
 
 button {
-  width: 300px;
-  padding: 10px;
+    width: 300px;
+    padding: 10px;
+}
+
+.box {
+    display: none;
 }

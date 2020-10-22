@@ -65,12 +65,12 @@ fi_k = 5 * mm
 s_k = 200 * mm
 
 # Odwrotna strzałka ugięcia (p. 8 [3])
-alfa_0 = lambda l_eff: (l_eff / 300 if l_eff >= 4 else 0)
+alfa_0 = lambda l_eff: (l_eff / 300)
 
 ######################################################################
 
 
-def oblicz(
+def wymiarowanie(
     g_k: float,
     q_k: float,
     kat: str,
@@ -273,7 +273,7 @@ def oblicz(
     gamma_k = max(1 - 0.9 * E_s * I_k / (E_c_eff * (b * h ** 3 / 12)), 0.85)
 
     # Warunek SLS (SGU) - Sprawdzenie ugięć (p. 7.4.1 [2])
-    alfa_fin = gamma_k * (alfa + alfa_cs) - alfa_0(l_eff)
+    alfa_fin = max(gamma_k * (alfa + alfa_cs) - alfa_0(l_eff), 0)
     alfa_lim = l_eff / 250
     if alfa_fin > alfa_lim:
         warn += "<font color=orange>Dopuszczalne ugięcie przekroczone.<br>"

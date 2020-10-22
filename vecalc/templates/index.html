@@ -9,8 +9,26 @@
     </script>
     <script type="text/javascript">
         $(function() {
-            $("a#process_input").bind("click", function() {
-                $.getJSON("/_process", {
+            $("a#dobierz").bind("click", function() {
+                $.getJSON("/_dobierz", {
+                    g_k: $('input[name="g_k"]').val(),
+                    q_k: $('input[name="q_k"]').val(),
+                    kat: $('select[name="kat"]').val(),
+                    l: $('input[name="l"]').val(),
+                    b: $('input[name="b"]').val(),
+                    h: $('input[name="h"]').val(),
+                    s: $('input[name="s"]').is(':checked'),
+                }, function(data) {
+                    $("#result").html(data.result);
+                });
+                return false;
+            });
+        });
+    </script>
+    <script type="text/javascript">
+        $(function() {
+            $("a#oblicz").bind("click", function() {
+                $.getJSON("/_oblicz", {
                     g_k: $('input[name="g_k"]').val(),
                     q_k: $('input[name="q_k"]').val(),
                     kat: $('select[name="kat"]').val(),
@@ -29,6 +47,14 @@
                     $("#result").html(data.result);
                 });
                 return false;
+            });
+        });
+    </script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $('input[type="checkbox"]').click(function() {
+                var inputValue = $(this).attr("value");
+                $("." + inputValue).toggle();
             });
         });
     </script>
@@ -64,19 +90,24 @@
         <input type="number" name="h" value="15" min="15" max="24"> cm<br>
         <label for="s">Wkłady styropianowe &nbsp; s =</label>
         <input type="checkbox" id="s" name="s">
-        <p><h4>ZBROJENIE</h4><br>
-        <input type="number" step="2" name="n_1" value="2" min="0" max="8">
-        # <input type="number" step="2" name="fi_1" value="8" min="6" max="14">
-        <small>na całej długości w płycie</small><br>
-        <input type="number" step="2" name="n_2" value="0" min="0" max="4">
-        # <input type="number" step="2" name="fi_2" value="8" min="6" max="14">
-        <small>dospawane do kratownicy</small><br>
-        <input type="number" step="2" name="n_3" value="0" min="0" max="4">
-        # <input type="number" step="2" name="fi_3" value="8" min="6" max="14">
-        <small>dozbrojenie na płycie</small><br>
-        # <input type="number" name="fi_r" value="6" min="4" max="8">
-        <small>rozdzielcze w płycie</small>
-        <p><a href="#" id="process_input"><button>OBLICZ</button></a></p>
+        <p><a href="#" id="dobierz"><button>DOBIERZ</button></a></p>
+    </form>
+    <form>
+        <p><h4><label>ZBROJENIE <input type="checkbox" value="check"></label></h4><br>
+        <div class="check box">
+            <input type="number" step="2" name="n_1" value="2" min="0" max="8">
+            # <input type="number" step="2" name="fi_1" value="8" min="6" max="14">
+            <small>na całej długości w płycie</small><br>
+            <input type="number" step="2" name="n_2" value="0" min="0" max="4">
+            # <input type="number" step="2" name="fi_2" value="8" min="6" max="14">
+            <small>dospawane do kratownicy</small><br>
+            <input type="number" step="2" name="n_3" value="0" min="0" max="4">
+            # <input type="number" step="2" name="fi_3" value="8" min="6" max="14">
+            <small>dozbrojenie na płycie</small><br>
+            # <input type="number" name="fi_r" value="6" min="4" max="8">
+            <small>rozdzielcze w płycie</small></p>
+            <p><a href="#" id="oblicz"><button>OBLICZ</button></a></p>
+        </div>
     </form>
     <p id="result"></p>
 </body>
