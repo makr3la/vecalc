@@ -151,6 +151,7 @@ def wymiarowanie(
     E_c_eff = E_cm / (1 + fi_t_t0)
     f_yd = f_yk / 1.15
     E_s = 200 * GPa
+    alfa_e = E_s / E_c_eff
 
     # Wkłady styropianowe (zastępcza szerokość z równości momentów bezwładności [7])
     if s == "true":
@@ -197,7 +198,12 @@ def wymiarowanie(
 
     # Warunek ULS (SGN) - Rozwarstwienie (p. 6.2.5 [2])
     beta = 1 if f_yd * A_s_prov / (f_cd * b) < (h - h_p) else (h - h_p) / h
-    z = 0.85 * d
+    if alfa_e * ro <= 0.06:
+        z = 0.9 * d
+    elif alfa_e * ro <= 0.18:
+        z = 0.85 * d
+    else:
+        z = 0.8 * d
     b_i = n_k(b_p) * b_w if s == "true" else b
     v_Ed_i = beta * V_Ed / (z * b_i)
     c, mi = 0.4, 0.7  # powierzchnie szorstkie, grabione
@@ -216,7 +222,6 @@ def wymiarowanie(
         warn += "<font color=red>Warunek nośności na rozwarstwienie niespełniony.<br>"
 
     # Ugięcia w stanie zarysowania (p. 7.4.3 [2])
-    alfa_e = E_s / E_c_eff
     x_I = (0.5 * b * h ** 2 + alfa_e * A_s_prov * d) / (b * h + alfa_e * A_s_prov)
     J = b * h ** 3 / 12
     J_I = J + b * h * (x_I - h / 2) ** 2 + alfa_e * A_s_prov * (d - x_I) ** 2
@@ -279,6 +284,23 @@ def wymiarowanie(
     if alfa_fin > alfa_lim:
         warn += "<font color=orange>Dopuszczalne ugięcie przekroczone.<br>"
 
+    # Warunek SLS (SGU) - Sprawdzenie rys (p. 7.3 [2] i tab. 14.2 [5])
+    alfa_e = E_s / E_cm
+    h_c_ef = min(2.5 * (h - d), (h - x_I) / 3)
+    A_c_eff = h_c_ef * b
+    ro_p_eff = A_s_prov / A_c_eff
+    sigma_s = M_Ed_q / (z * A_s_prov)
+    k_t = 0.4  # dla obciążeń długotrwałych
+    epsilon_sm_cm = max(
+        (sigma_s - k_t * (f_ctm / ro_p_eff) * (1 + alfa_e * ro_p_eff)) / E_s,
+        0.6 * sigma_s / E_s,
+    )
+    s_r_max = 1.3 * (h - x_I)
+    w_k = s_r_max * epsilon_sm_cm
+    w_max = 0.4 * mm
+    if w_k > w_max:
+        warn += "<font color=orange>Dopuszczalne rysy przekroczone.<br>"
+
     # Notka
     s_r = min(40 * cm, m / (0.2 * A_s_req / (b_p * cm) / A_s(fi_r)))
     return (
@@ -304,7 +326,10 @@ def wymiarowanie(
             f"&alpha;<sub>fin</sub> = {alfa_fin / mm:.1f} mm "
             f"{'<' if alfa_fin < alfa_lim else '>'} "
             f"&alpha;<sub>lim</sub> = {alfa_lim / mm:.1f} mm "
-            f"({float(alfa_fin / alfa_lim):.1%})</p>"
+            f"({float(alfa_fin / alfa_lim):.1%})<br>"
+            f"w<sub>k</sub> = {w_k / mm:.2f} mm "
+            f"{'<' if w_k < w_max else '>'} "
+            f"w<sub>max</sub> = {w_max / mm:.1f} mm ({float(w_k/w_max):.1%})</p>"
         ),
         warn if warn else "<font color=green>Warunki stanów granicznych spełnione.<br>",
     )
