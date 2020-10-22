@@ -86,6 +86,7 @@ def wymiarowanie(
     fi_r: float,
 ) -> (str, str):
     """Wymiarowanie zbrojenia do schematu belki jednoprzęsłowej, swobodnie podpartej."""
+    l_p = (ceil(round(l + 12 * cm, 3) / cm / 10)) * 10  # długość płyty w cm
     b_p = round(b / cm)  # szerokość płyty w cm
     p_k = (g_k + q_k) / kPa  # całkowite char. obciążenie ponad ciężar własny w kN/m2
     warn = ""
@@ -111,7 +112,7 @@ def wymiarowanie(
         g_k * 1.35 + q_k * 1.5 * psi_0[kat], g_k * 1.35 * 0.85 + q_k * 1.5
     )
     p_q = g_k + q_k * psi_2[kat]  # 6.16b [1]
-    l_eff = l + 8 * cm  # p. 8 [3]
+    l_eff = (l_p * cm + l) / 2
     M_Ed = 0.125 * p * l_eff ** 2
     V_Ed = 0.5 * p * l_eff
     l_eff = l  # p. 8 [3]
@@ -279,7 +280,6 @@ def wymiarowanie(
         warn += "<font color=orange>Dopuszczalne ugięcie przekroczone.<br>"
 
     # Notka
-    l_p = (ceil(round(l + 12 * cm, 3) / cm / 10)) * 10
     s_r = min(40 * cm, m / (0.2 * A_s_req / (b_p * cm) / A_s(fi_r)))
     return (
         (
