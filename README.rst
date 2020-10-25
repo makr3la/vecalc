@@ -1,8 +1,9 @@
-stropy-malro
+Stropy Małro
 ============
 
 Aplikacja internetowa pozwalająca na szybki dobór zbrojenia lub ręczne zwymiarowanie
-płyt stropów zespolonych przyjmując podejście tradycyjne:
+płyt stropowych produkowanych przez `Stropy Małro <https://stropymalro.pl/>`_,
+przyjmując podejście tradycyjne:
 
     *W stropach zespolonych stosowane są trzy podejścia do obliczeń statycznych.
     Podejście tradycyjne, w którym niezależnie od istnienia podpór równoległych do
