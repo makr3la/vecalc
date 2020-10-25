@@ -1,16 +1,17 @@
-vecalc
-======
+stropy-malro
+============
 
-Kalkulator stropów VECTOR
+Aplikacja internetowa pozwalająca na szybki dobór zbrojenia lub ręczne zwymiarowanie
+płyt stropów zespolonych przyjmując podejście tradycyjne:
 
     *W stropach zespolonych stosowane są trzy podejścia do obliczeń statycznych.
-    Podejście tradycyjne dla stropów typu filigran, w którym niezależnie od istnienia
-    podpór równoległych do długości stropów, zawsze oblicza się strop metodą belkową
-    jednokierunkową. Pozwala to na pełne zautomatyzowanie obliczeń i rysowania
-    prefabrykatów, lecz pociąga za sobą duży dodatkowy wydatek zbrojenia, czasami trudności
-    z przeniesieniem sił ścinających i rozwarstwiających oraz z spełnieniem warunków
-    normowych ugięć. Następuje wtedy dalekie odejście obliczeniowego schematu statycznego
-    od rzeczywistości fizycznej. Konsekwencją jest także niezgodne z rzeczywistym
+    Podejście tradycyjne, w którym niezależnie od istnienia podpór równoległych do
+    długości stropów, zawsze oblicza się strop metodą belkową jednokierunkową. Pozwala
+    to na pełne zautomatyzowanie obliczeń i rysowania prefabrykatów, lecz pociąga za
+    sobą duży dodatkowy wydatek zbrojenia, czasami trudności z przeniesieniem sił
+    ścinających i rozwarstwiających oraz z spełnieniem warunków normowych ugięć.
+    Następuje wtedy dalekie odejście obliczeniowego schematu statycznego od
+    rzeczywistości fizycznej. Konsekwencją jest także niezgodne z rzeczywistym
     zestawienie obciążeń na ściany i inne elementy podpierające, a dalej na fundamenty.
     Oczywiście tak obliczona konstrukcja spełni warunki stanu nośności po odpowiednim
     zaadoptowaniu się ustroju, czyli po zarysowaniu.* - Włodzimierz Starosolski,

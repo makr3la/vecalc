@@ -305,7 +305,7 @@ def wymiarowanie(
     s_r = min(40 * cm, m / (0.2 * A_s_req / (b_p * cm) / A_s(fi_r)))
     return (
         (
-            f"<h4><mark>VECTOR {h / cm:.0f}{'s' if s == 'true' else ''} L={l_p} "
+            f"<h4><mark>PŁYTA {h / cm:.0f}{'s' if s == 'true' else ''} L={l_p} "
             f"W={b_p} ({p_k:.1f} kN/m2)<br>zbroj. {n_1}#{fi_1 / mm:.0f} "
             f"{f'+ {n_2}#{fi_2 / mm:.0f}' if n_2 != 0 else ''}<br></mark>"
             f"{f'dozbrojenie na płycie {n_3}#{fi_3 / mm:.0f}<br>' if n_3 != 0 else ''}"

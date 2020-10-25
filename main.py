@@ -1,4 +1,4 @@
-from vecalc import app
+from stropy_malro import app
 
 
 if __name__ == "__main__":

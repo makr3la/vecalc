@@ -1,4 +1,4 @@
 runtime: python38
 handlers:
 - url: /static
-  static_dir: vecalc/static
+  static_dir: stropy_malro/static
