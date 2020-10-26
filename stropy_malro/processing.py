@@ -17,30 +17,7 @@ GPa = 1e9
 
 A_s = lambda fi: pi * (fi / 2) ** 2
 
-####################### Założenia Stropy Małro #######################
-
-# Beton konstrukcyjny prefabrykatów i nadbetonu klasy C20/25 (B25)
-f_ck = 20 * MPa
-
-# Stal zbrojeniowa klasy C (A-IIIN) – gatunek B500SP EPSTAL
-f_yk = 500 * MPa
-mi_lim = 0.371  # tab. 7.2 [5]
-
-# Cement klasy N
-alfa_ds1 = 4
-alfa_ds2 = 0.12
-
-# Klasa konstrukcji S4 (-1 - element mający kształt płyty) i klasa ekspozycji XC1
-c_min_dur = 10 * mm  # otulenie ze względu na warunki środowiska
-delta_c_dev = 5 * mm  # odchyłka otulenia elementów prefabrykowanych
-
-# Ugięcia od skurczu
-t = 50 * 365  # wiek betonu w rozważanej chwili w dniach
-ts = 5  # wiek betonu na końcu okresu pielęgnacji w dniach
-t0 = 28  # wiek betonu w chwili przyłożenia obciążenia
-RH = 80  # wilgotność powietrza zewnętrznego w procentach
-
-# Geometria i wkłady styropianowe
+# Wkłady styropianowe
 b_w = 16 * cm  # szerokość żebra usztywniającego (odstęp pomiędzy licami wkładów)
 b_st = 5 * cm  # odstęp pomiędzy krawędzią płyty i licem wkładu styropianowego
 
@@ -53,20 +30,6 @@ def h_st(h: float) -> float:
         return 12 * cm
     else:
         raise Exception("Nie zdefiniowano wysokości wkładu do podanej grubości stropu.")
-
-
-# Kratownice stalowe FILIGRAN typ E
-h_k = lambda h: (14 * cm if h >= 20 * cm else 10 * cm)
-n_k = lambda b_p: (ceil(b_p / 60))
-fi_g = 10 * mm
-fi_d = 5 * mm
-fi_k = 5 * mm
-s_k = 200 * mm
-
-# Odwrotna strzałka ugięcia (p. 8 [3])
-alfa_0 = lambda l_eff: (l_eff / 300)
-
-######################################################################
 
 
 def wymiarowanie(
@@ -84,14 +47,20 @@ def wymiarowanie(
     fi_2: float,
     fi_3: float,
     fi_r: float,
+    n_k: int,
+    h_k: float,
+    fi_d: float,
+    fi_k: float,
+    fi_g: float,
+    bet: str,
+    c_min_dur: float,
+    delta_c_dev: float,
 ) -> (str, str):
     """Wymiarowanie zbrojenia do schematu belki jednoprzęsłowej, swobodnie podpartej."""
     l_p = (ceil(round(l + 12 * cm, 3) / cm / 10)) * 10  # długość płyty w cm
     b_p = round(b / cm)  # szerokość płyty w cm
-    p_k = (g_k + q_k) / kPa  # całkowite char. obciążenie ponad ciężar własny w kN/m2
+    p_k = (g_k + q_k) / kPa  # całkowite obciążenie char. ponad ciężar własny w kN/m2
     warn = ""
-    if n_2 not in [0, n_k(b_p) * 2]:
-        raise Exception("Dopuszczalne 0 lub 2 pręty dospawane do jednej kratownicy.")
 
     # Statyka
     psi_0 = {  # tab. A 1.1 [1]
@@ -105,7 +74,7 @@ def wymiarowanie(
     }
     g_k, q_k = b * g_k, b * q_k  # przeliczenie obciążenia na metr bieżący przekroju
     if s == "true":  # dodanie ciężaru własnego do obciążeń stałych
-        g_k += 24.5 * kPa * (h * b - (b - n_k(b_p) * b_w - 2 * b_st) * h_st(h))
+        g_k += 24.5 * kPa * (h * b - (b - n_k * b_w - 2 * b_st) * h_st(h))
     else:
         g_k += 24.5 * kPa * h * b
     p = max(  # 6.10a/b [1]
@@ -124,16 +93,21 @@ def wymiarowanie(
     c_nom = c_min + delta_c_dev
     h_p = max(45 * mm, c_nom + 2 * fi_1 + fi_r, c_nom + fi_2 + 10 * mm + fi_r)
     A_s_1 = n_1 * A_s(fi_1)
-    A_s_2 = n_2 * A_s(fi_2) + n_k(b_p) * 2 * A_s(fi_d)
+    A_s_2 = n_2 * A_s(fi_2) + n_k * 2 * A_s(fi_d)
     A_s_3 = n_3 * A_s(fi_3)
     A_s_prov = A_s_1 + A_s_2 + A_s_3
     a_1 = c_nom + fi_1 / 2 + fi_r
     a_2 = c_nom + fi_1 / 2 + fi_r
-    a_3 = h_p + fi_3 / 2
+    a_3 = h_p + fi_3 / 2 + 10 * mm
     a_mean = (A_s_1 * a_1 + A_s_2 * a_2 + A_s_3 * a_3) / A_s_prov
     d = h - a_mean
 
     # Materiały (p. 3 oraz załącznik B [2])
+    t = 50 * 365  # wiek betonu w rozważanej chwili w dniach
+    ts = 5  # wiek betonu na końcu okresu pielęgnacji w dniach
+    t0 = 28  # wiek betonu w chwili przyłożenia obciążenia
+    RH = 80  # wilgotność powietrza zewnętrznego w procentach
+    f_ck = int(bet) * MPa
     f_cd = f_ck / 1.4
     f_cm = f_ck + 8 * MPa
     f_ctm = 0.3 * (f_ck / MPa) ** (2 / 3) * MPa
@@ -149,33 +123,32 @@ def wymiarowanie(
     beta_c_t_t0 = ((t - t0) / (beta_H + t - t0)) ** 0.3
     fi_t_t0 = fi_0 * beta_c_t_t0
     E_c_eff = E_cm / (1 + fi_t_t0)
+    f_yk = 500 * MPa  # stal zbrojeniowa klasy C (A-IIIN)
     f_yd = f_yk / 1.15
     E_s = 200 * GPa
     alfa_e = E_s / E_c_eff
 
     # Wkłady styropianowe (zastępcza szerokość z równości momentów bezwładności [7])
     if s == "true":
-        if n_k(b_p) == 1 and (b - b_w - 2 * b_st) / 2 < max(h_st(h), 85 * mm):
+        if n_k == 1 and (b - b_w - 2 * b_st) / 2 < max(h_st(h), 85 * mm):
             raise Exception("Nie można stosować wkładów do podanej szerokości płyty.")
         A_c = b * h
         y_c = h / 2
         J_c = b * h ** 3 / 12
-        A_st = (b - n_k(b_p) * b_w - 2 * b_st) * h_st(h)
+        A_st = (b - n_k * b_w - 2 * b_st) * h_st(h)
         y_st = h_p + h_st(h) / 2
-        J_st = (b - n_k(b_p) * b_w - 2 * b_st) * h_st(h) ** 3 / 12
+        J_st = (b - n_k * b_w - 2 * b_st) * h_st(h) ** 3 / 12
         y = (A_c * y_c - A_st * y_st) / (A_c - A_st)
         J_z = J_c - J_st + A_c * (y_c - y) ** 2 - A_st * (y_st - y) ** 2
         b = 12 * J_z / h ** 3
 
     # Warunek ULS (SGN) - Zginanie (tab. 7.2 i p. 7.1.1 [5])
     mi = M_Ed / (b * d ** 2 * f_cd)
-    if mi > mi_lim:
+    if mi > 0.371:  # tab. 7.2 [5]
         warn += "<font color=red>Przekroczno wartość graniczną mi.<br>"
     omega = 0.9731 - sqrt(0.9469 - 1.946 * mi)
     A_c = A_c - A_st if s == "true" else b * d
-    A_s_req = max(
-        omega * A_c * (f_cd / f_yd), 0.26 * f_ctm / f_yk * A_c, 0.0013 * A_c
-    ) - n_k(b_p) * 2 * A_s(fi_d)
+    A_s_req = max(omega * A_c * (f_cd / f_yd), 0.26 * f_ctm / f_yk * A_c, 0.0013 * A_c)
     ro = A_s_prov / A_c
     if A_s_prov < A_s_req:
         warn += f"<font color=red>Zbyt mały stopień zbrojenia przekroju = {ro:.2%}.<br>"
@@ -204,13 +177,14 @@ def wymiarowanie(
         z = 0.85 * d
     else:
         z = 0.8 * d
-    b_i = n_k(b_p) * b_w if s == "true" else b
+    b_i = n_k * b_w if s == "true" else b
     v_Ed_i = beta * V_Ed / (z * b_i)
     c, mi = 0.4, 0.7  # powierzchnie szorstkie, grabione
     sigma_n = min(p_q / b_i, 0.6 * f_cd)
-    A_s_i = n_k(b_p) * 2 * A_s(fi_k)
+    A_s_i = n_k * 2 * A_s(fi_k)
+    s_k = 200 * mm  # rozstaw krzyżulców kratownicy
     A_i = b_i * s_k
-    a = deg(atan(s_k / 2 / h_k(h)))
+    a = deg(atan(s_k / 2 / h_k))
     v = 0.6 * (1 - f_ck / MPa / 250)
     v_Rd_i = min(
         c * f_ctd
@@ -249,6 +223,7 @@ def wymiarowanie(
         k_h = 0.7
     beta_RH = 1.55 * (1 - (RH / 100) ** 3)
     f_cm0 = 10 * MPa
+    alfa_ds1, alfa_ds2 = 4, 0.12  # cement klasy N
     epsilon_cd_0 = (
         0.85
         * (220 + 110 * alfa_ds1)
@@ -270,17 +245,18 @@ def wymiarowanie(
     alfa_cs = alfa_ks * k_cs_m * l_eff ** 2
 
     # Wpływ kratownicy na zmniejszenie ugięcia (p. 8 [3])
-    y_g = h_k(h) - fi_g / 2
-    y_d = (fi_d + fi_2) / 4
-    y = (n_k(b_p) * A_s(fi_g) * y_g + A_s_2 * y_d) / (n_k(b_p) * A_s(fi_g) + A_s_2)
-    I_g = pi * sqrt(n_k(b_p) * A_s(fi_g) / pi) ** 4 / 64
+    y_g = h_k - fi_g / 2
+    y_d = (2 * fi_d + n_2 * fi_2) / (2 + n_2)
+    y = (n_k * A_s(fi_g) * y_g + A_s_2 * y_d) / (n_k * A_s(fi_g) + A_s_2)
+    I_g = pi * sqrt(n_k * A_s(fi_g) / pi) ** 4 / 64
     I_d = pi * sqrt(A_s_2 / pi) ** 4 / 64
-    I_k = I_g + I_d + n_k(b_p) * A_s(fi_g) * (y_g - y) ** 2 + A_s_2 * (y_d - y) ** 2
+    I_k = I_g + I_d + n_k * A_s(fi_g) * (y_g - y) ** 2 + A_s_2 * (y_d - y) ** 2
     gamma_k = max(1 - 0.9 * E_s * I_k / (E_c_eff * (b * h ** 3 / 12)), 0.85)
 
     # Warunek SLS (SGU) - Sprawdzenie ugięć (p. 7.4.1 [2])
-    alfa_fin = max(gamma_k * (alfa + alfa_cs) - alfa_0(l_eff), 0)
-    alfa_lim = l_eff / 250
+    alfa_0 = l_eff / 300  # odwrotna strzałka ugięcia (p. 8 [3])
+    alfa_fin = max(gamma_k * (alfa + alfa_cs) - alfa_0, 0)
+    alfa_lim = l_eff / 250  # p. 7.4.1(4) [2]
     if alfa_fin > alfa_lim:
         warn += "<font color=orange>Dopuszczalne ugięcie przekroczone.<br>"
 
@@ -297,7 +273,7 @@ def wymiarowanie(
     )
     s_r_max = 1.3 * (h - x_I)
     w_k = s_r_max * epsilon_sm_cm
-    w_max = 0.4 * mm
+    w_max = 0.4 * mm  # tab. 7.2N [2]
     if w_k > w_max:
         warn += "<font color=orange>Dopuszczalne rysy przekroczone.<br>"
 
@@ -309,8 +285,9 @@ def wymiarowanie(
             f"W={b_p} ({p_k:.1f} kN/m2)<br>zbroj. {n_1}#{fi_1 / mm:.0f} "
             f"{f'+ {n_2}#{fi_2 / mm:.0f}' if n_2 != 0 else ''}<br></mark>"
             f"{f'dozbrojenie na płycie {n_3}#{fi_3 / mm:.0f}<br>' if n_3 != 0 else ''}"
-            f"rozdzielcze #{fi_r / mm:.0f} co {s_r / cm:.0f} cm <br>{n_k(b_p)} krat. "
-            f"E-{h_k(h) / cm:.0f}-0{fi_d / mm:.0f}{fi_k / mm:.0f}{fi_g / mm:.0f}</h4>"
+            f"rozdzielcze #{fi_r / mm:.0f} co {s_r / cm:.0f} cm <br>"
+            f"{n_k} krat. E {h_k / cm:.0f} "
+            f"{int(fi_d / mm):02d}{fi_k / mm:.0f}{int(fi_g / mm):02d}</h4>"
             f"<p><h4>WYMIAROWANIE WG EUROKODÓW</h4><br>"
             f"A<sub>s</sub> = {A_s_prov / cm2:.2f} cm&#178; "
             f"({A_s_prov / (b_p * cm) / mm2:.0f} mm&#178;/m) &rho; = {ro:.2%}<br>"
