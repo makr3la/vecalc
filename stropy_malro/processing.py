@@ -17,20 +17,6 @@ GPa = 1e9
 
 A_s = lambda fi: pi * (fi / 2) ** 2
 
-# Wkłady styropianowe
-b_w = 16 * cm  # szerokość żebra usztywniającego (odstęp pomiędzy licami wkładów)
-b_st = 5 * cm  # odstęp pomiędzy krawędzią płyty i licem wkładu styropianowego
-
-
-def h_st(h: float) -> float:
-    """Zwraca wysokość wkładu styropianowego w zależności od grubości stropu."""
-    if h >= 20 * cm:
-        return 10 * cm
-    elif h >= 23 * cm:
-        return 12 * cm
-    else:
-        raise Exception("Nie zdefiniowano wysokości wkładu do podanej grubości stropu.")
-
 
 def wymiarowanie(
     g_k: float,
@@ -55,42 +41,18 @@ def wymiarowanie(
     bet: str,
     c_min_dur: float,
     delta_c_dev: float,
+    b_w: float,
+    h_st: float,
 ) -> (str, str):
     """Wymiarowanie zbrojenia do schematu belki jednoprzęsłowej, swobodnie podpartej."""
-    l_p = (ceil(round(l + 12 * cm, 3) / cm / 10)) * 10  # długość płyty w cm
-    b_p = round(b / cm)  # szerokość płyty w cm
-    p_k = (g_k + q_k) / kPa  # całkowite obciążenie char. ponad ciężar własny w kN/m2
     warn = ""
-
-    # Statyka
-    psi_0 = {  # tab. A 1.1 [1]
-        **dict.fromkeys(["A", "B", "C", "D", "F", "G", "S1"], 0.7),
-        **{"E": 1.0, "H": 0, "S2": 0.5},
-    }
-    psi_2 = {  # tab. A 1.1 [1]
-        **dict.fromkeys(["A", "B"], 0.3),
-        **dict.fromkeys(["C", "D", "F"], 0.6),
-        **{"E": 0.8, "G": 0.3, "H": 0, "S1": 0.2, "S2": 0.2},
-    }
-    g_k, q_k = b * g_k, b * q_k  # przeliczenie obciążenia na metr bieżący przekroju
-    if s == "true":  # dodanie ciężaru własnego do obciążeń stałych
-        g_k += 24.5 * kPa * (h * b - (b - n_k * b_w - 2 * b_st) * h_st(h))
-    else:
-        g_k += 24.5 * kPa * h * b
-    p = max(  # 6.10a/b [1]
-        g_k * 1.35 + q_k * 1.5 * psi_0[kat], g_k * 1.35 * 0.85 + q_k * 1.5
-    )
-    p_q = g_k + q_k * psi_2[kat]  # 6.16b [1]
-    l_eff = (l_p * cm + l) / 2
-    M_Ed = 0.125 * p * l_eff ** 2
-    V_Ed = 0.5 * p * l_eff
-    l_eff = l  # p. 8 [3]
-    M_Ed_q = 0.125 * p_q * l_eff ** 2
 
     # Otulina, przyjęte zbrojenie i wysokość użyteczna (p. 4.4 [2])
     c_min_b = max(fi_1, fi_2) - fi_r
     c_min = max(c_min_b, c_min_dur, 10 * mm)
     c_nom = c_min + delta_c_dev
+    l_p = (ceil(round(l + 12 * cm, 3) / cm / 10)) * 10  # długość płyty w cm
+    b_p = round(b / cm)  # szerokość płyty w cm
     h_p = max(45 * mm, c_nom + 2 * fi_1 + fi_r, c_nom + fi_2 + 10 * mm + fi_r)
     A_s_1 = n_1 * A_s(fi_1)
     A_s_2 = n_2 * A_s(fi_2) + n_k * 2 * A_s(fi_d)
@@ -101,6 +63,25 @@ def wymiarowanie(
     a_3 = h_p + fi_3 / 2 + 10 * mm
     a_mean = (A_s_1 * a_1 + A_s_2 * a_2 + A_s_3 * a_3) / A_s_prov
     d = h - a_mean
+
+    # Wkłady styropianowe (zastępcza szerokość z równości momentów bezwładności [7])
+    if s == "true":
+        b_st = 5 * cm  # odstęp pomiędzy krawędzią płyty i licem wkładu styropianowego
+        if b_w < 70 * mm + 2 * c_nom:
+            raise Exception("Za mała szerokość żeber usztywniających.")
+        if h - h_p - h_st < 50 * mm:
+            raise Exception("Za mała grubość nadbetonu nad wkładami styropianowymi.")
+        if n_k == 1 and (b - b_w - 2 * b_st) / 2 < max(h_st, 85 * mm):
+            raise Exception("Nie można stosować wkładów do podanej szerokości płyty.")
+        A_c = b * h
+        y_c = h / 2
+        J_c = b * h ** 3 / 12
+        A_st = (b - n_k * b_w - 2 * b_st) * h_st
+        y_st = h_p + h_st / 2
+        J_st = (b - n_k * b_w - 2 * b_st) * h_st ** 3 / 12
+        y = (A_c * y_c - A_st * y_st) / (A_c - A_st)
+        J_z = J_c - J_st + A_c * (y_c - y) ** 2 - A_st * (y_st - y) ** 2
+        b = 12 * J_z / h ** 3
 
     # Materiały (p. 3 oraz załącznik B [2])
     t = 50 * 365  # wiek betonu w rozważanej chwili w dniach
@@ -128,19 +109,31 @@ def wymiarowanie(
     E_s = 200 * GPa
     alfa_e = E_s / E_c_eff
 
-    # Wkłady styropianowe (zastępcza szerokość z równości momentów bezwładności [7])
-    if s == "true":
-        if n_k == 1 and (b - b_w - 2 * b_st) / 2 < max(h_st(h), 85 * mm):
-            raise Exception("Nie można stosować wkładów do podanej szerokości płyty.")
-        A_c = b * h
-        y_c = h / 2
-        J_c = b * h ** 3 / 12
-        A_st = (b - n_k * b_w - 2 * b_st) * h_st(h)
-        y_st = h_p + h_st(h) / 2
-        J_st = (b - n_k * b_w - 2 * b_st) * h_st(h) ** 3 / 12
-        y = (A_c * y_c - A_st * y_st) / (A_c - A_st)
-        J_z = J_c - J_st + A_c * (y_c - y) ** 2 - A_st * (y_st - y) ** 2
-        b = 12 * J_z / h ** 3
+    # Statyka
+    p_k = (g_k + q_k) / kPa  # całkowite obciążenie char. ponad ciężar własny w kN/m2
+    g_k, q_k = b * g_k, b * q_k  # przeliczenie obciążenia na metr bieżący przekroju
+    psi_0 = {  # tab. A 1.1 [1]
+        **dict.fromkeys(["A", "B", "C", "D", "F", "G", "S1"], 0.7),
+        **{"E": 1.0, "H": 0, "S2": 0.5},
+    }
+    psi_2 = {  # tab. A 1.1 [1]
+        **dict.fromkeys(["A", "B"], 0.3),
+        **dict.fromkeys(["C", "D", "F"], 0.6),
+        **{"E": 0.8, "G": 0.3, "H": 0, "S1": 0.2, "S2": 0.2},
+    }
+    if s == "true":  # dodanie ciężaru własnego do obciążeń stałych
+        g_k += 24.5 * kPa * (h * b - (b - n_k * b_w - 2 * b_st) * h_st)
+    else:
+        g_k += 24.5 * kPa * h * b
+    p = max(  # 6.10a/b [1]
+        g_k * 1.35 + q_k * 1.5 * psi_0[kat], g_k * 1.35 * 0.85 + q_k * 1.5
+    )
+    p_q = g_k + q_k * psi_2[kat]  # 6.16b [1]
+    l_eff = (l_p * cm + l) / 2
+    M_Ed = 0.125 * p * l_eff ** 2
+    V_Ed = 0.5 * p * l_eff
+    l_eff = l  # p. 8 [3]
+    M_Ed_q = 0.125 * p_q * l_eff ** 2
 
     # Warunek ULS (SGN) - Zginanie (tab. 7.2 i p. 7.1.1 [5])
     mi = M_Ed / (b * d ** 2 * f_cd)

@@ -16,6 +16,7 @@ def _dobierz():
     """Dobór zbrojenia na podstawie obciążeń i geometrii z założeniami Stropy Małro."""
     b = float(request.args.get("b")) * p.cm
     h = float(request.args.get("h")) * p.cm
+    s = request.args.get("s")
     b_p = round(b / p.cm)
     n_k = ceil(b_p / 60)
     n_1 = ceil(((b_p - n_k * 6) / 18 - n_k) / 2) * 2
@@ -41,7 +42,7 @@ def _dobierz():
                 l=float(request.args.get("l")) * p.cm,
                 b=b,
                 h=h,
-                s=request.args.get("s"),
+                s=s,
                 n_1=n_1,
                 n_2=n_2,
                 n_3=0,
@@ -57,6 +58,8 @@ def _dobierz():
                 bet="20",
                 c_min_dur=10 * p.mm,
                 delta_c_dev=5 * p.mm,
+                b_w=16 * p.cm,
+                h_st=(h / p.cm // 4 * 2 * p.cm if s == "true" else 0),
             )
             if result[1].startswith("<font color=green>"):
                 return jsonify(result=result)
@@ -93,6 +96,8 @@ def _oblicz():
                 bet=request.args.get("bet"),
                 c_min_dur=float(request.args.get("c_min_dur")) * p.mm,
                 delta_c_dev=float(request.args.get("delta_c_dev")) * p.mm,
+                b_w=float(request.args.get("b_w")) * p.cm,
+                h_st=float(request.args.get("h_st")) * p.cm,
             )
         )
     except Exception as e:

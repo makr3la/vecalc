@@ -51,6 +51,8 @@
                     bet: $('select[name="bet"]').val(),
                     c_min_dur: $('input[name="c_min_dur"]').val(),
                     delta_c_dev: $('input[name="delta_c_dev"]').val(),
+                    b_w: $('input[name="b_w"]').val(),
+                    h_st: $('input[name="h_st"]').val(),
                 }, function(data) {
                     $("#result").html(data.result);
                 });
@@ -138,6 +140,12 @@
             &Delta;c<sub>dev</sub> =
             <input type="number" step="5" name="delta_c_dev" value="5" min="0" max="10"
             title="Odchyłka otulenia"> mm
+            <p>b<sub>w</sub> =
+            <input type="number" name="b_w" value="16" min="10"
+            title="Odstęp pomiędzy licami wkładów styropianowych"> cm<br>
+            h<sub>st</sub> =
+            <input type="number" name="h_st" value="10" min="5"
+            title="Wysokość wkładów styropianowych"> cm
             <p><a href="#" id="oblicz"><button>OBLICZ</button></a></p>
         </div>
     </form>
