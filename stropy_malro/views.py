@@ -61,7 +61,7 @@ def _dobierz():
             )
             if result[1].startswith("<font color=green>"):
                 return jsonify(result=result)
-        return jsonify(result="<font color=orange>Dobierz zbrojenie ręcznie.")
+        return jsonify(result="<font color=orange>Nie można dobrać zbrojenia.")
     except Exception as e:
         return jsonify(result=str(e))
 
