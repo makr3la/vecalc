@@ -121,10 +121,10 @@ def wymiarowanie(
         **dict.fromkeys(["C", "D", "F"], 0.6),
         **{"E": 0.8, "G": 0.3, "H": 0, "S1": 0.2, "S2": 0.2},
     }
-    if s == "true":  # dodanie ciężaru własnego do obciążeń stałych
-        g_k += 24.5 * kPa * (h * b - (b - n_k * b_w - 2 * b_st) * h_st)
-    else:
-        g_k += 24.5 * kPa * h * b
+    g_k += 24.5 * kPa * h * b  # dodanie ciężaru własnego do obciążeń stałych
+    if s == "true":
+        gamma_s = max((1 - (2 * 0.5 * m + max(l // (2 * m), 1) * 0.25 * m) / l), 0)
+        g_k -= gamma_s * 24.5 * kPa * ((b - n_k * b_w - 2 * b_st) * h_st)
     p = max(  # 6.10a/b [1]
         g_k * 1.35 + q_k * 1.5 * psi_0[kat], g_k * 1.35 * 0.85 + q_k * 1.5
     )
