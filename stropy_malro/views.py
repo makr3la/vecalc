@@ -1,4 +1,3 @@
-from itertools import product
 from math import ceil
 
 from flask import jsonify, render_template, request
@@ -19,19 +18,18 @@ def _dobierz():
     s = request.args.get("s")
     b_p = round(b / p.cm)
     n_k = ceil(b_p / 60)
-    types = [
-        (fi_1 * p.mm, fi_2 * p.mm)
-        for (fi_1, fi_2) in [
-            (8, 0),
-            (10, 0),
-            (12, 0),
-            (10, 10),
-            (10, 12),
-            (10, 14),
-        ]
+    types = [  # fi_1, fi_2, n_2
+        (8, 0, 0),
+        (10, 0, 0),
+        (12, 0, 0),
+        (10, 10, 2 * n_k),
+        (10, 12, 2 * n_k),
+        (10, 12, 3 * n_k),
+        (10, 14, 3 * n_k),
     ]
+    h_st = 5 if h < 18 * p.cm else 8 if h < 20 * p.cm else 10 if h < 24 * p.cm else 12
     try:
-        for (fi_1, fi_2), n_2 in product(types, [0, n_k * 2, n_k * 3]):
+        for fi_1, fi_2, n_2 in types:
             result = p.wymiarowanie(
                 g_k=float(request.args.get("g_k")) * p.kPa,
                 q_k=float(request.args.get("q_k")) * p.kPa,
@@ -43,8 +41,8 @@ def _dobierz():
                 n_1=ceil(((b_p - n_k * 6) / 18 - n_k) / 2) * 2,
                 n_2=n_2,
                 n_3=0,
-                fi_1=fi_1,
-                fi_2=fi_2,
+                fi_1=fi_1 * p.mm,
+                fi_2=fi_2 * p.mm,
                 fi_3=0,
                 fi_r=6 * p.mm,
                 n_k=n_k,
@@ -56,7 +54,7 @@ def _dobierz():
                 c_min_dur=10 * p.mm,
                 delta_c_dev=5 * p.mm,
                 b_w=16 * p.cm,
-                h_st=(h / p.cm // 4 * 2 * p.cm if s == "true" else 0),
+                h_st=(h_st * p.cm if s == "true" else 0),
             )
             if result[1].startswith("<font color=green>"):
                 return jsonify(result=result)
