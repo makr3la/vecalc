@@ -140,12 +140,14 @@ def wymiarowanie(
     if mi > 0.371:  # tab. 7.2 [5]
         warn += "<font color=red>Przekroczno wartość graniczną mi.<br>"
     omega = 0.9731 - sqrt(0.9469 - 1.946 * mi)
-    A_c = A_c - A_st if s == "true" else b * d
-    A_s_req = max(omega * A_c * (f_cd / f_yd), 0.26 * f_ctm / f_yk * A_c, 0.0013 * A_c)
-    ro = A_s_prov / A_c
+    A_s_req = max(
+        omega * b * d * (f_cd / f_yd), 0.26 * (f_ctm / f_yk) * b * d, 0.0013 * b * d
+    )
+    ro = A_s_prov / (b * d)
     if A_s_prov < A_s_req:
         warn += f"<font color=red>Zbyt mały stopień zbrojenia przekroju = {ro:.2%}.<br>"
-    if A_s_prov > 0.5 * f_cd / f_yd * A_c or A_s_prov > 0.04 * A_c:
+    A_c = A_c - A_st if s == "true" else b * d
+    if A_s_prov > 0.04 * A_c or A_s_prov > 0.5 * (f_cd / f_yd) * b * d:
         warn += f"<font color=red>Zbyt duży stopień zbrojenia przekroju = {ro:.2%}.<br>"
     M_Rd = A_s_prov * f_yd * (d - 0.5138 * ((A_s_prov * f_yd) / (b * f_cd)))
     if M_Ed > M_Rd:
