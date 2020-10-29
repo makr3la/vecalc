@@ -85,8 +85,9 @@ def wymiarowanie(
 
     # Materiały (p. 3 oraz załącznik B [2])
     t = 50 * 365  # wiek betonu w rozważanej chwili w dniach
-    ts = 5  # wiek betonu na końcu okresu pielęgnacji w dniach
-    t0 = 28  # wiek betonu w chwili przyłożenia obciążenia
+    tp = 5  # wiek betonu na końcu okresu produkcji i montażu w dniach
+    ts = 5 + tp  # wiek betonu na końcu okresu pielęgnacji w dniach
+    t0 = 28 + tp  # wiek betonu w chwili przyłożenia obciążenia
     RH = 80  # wilgotność powietrza zewnętrznego w procentach
     f_ck = int(bet) * MPa
     f_cd = f_ck / 1.4
