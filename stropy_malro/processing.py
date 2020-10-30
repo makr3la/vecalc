@@ -85,7 +85,7 @@ def wymiarowanie(
 
     # Materiały (p. 3 oraz załącznik B [2])
     t = 50 * 365  # wiek betonu w rozważanej chwili w dniach
-    tp = 5  # wiek betonu na końcu okresu produkcji i montażu w dniach
+    tp = 7  # wiek betonu na końcu okresu produkcji i montażu w dniach
     ts = 5 + tp  # wiek betonu na końcu okresu pielęgnacji w dniach
     t0 = 28 + tp  # wiek betonu w chwili przyłożenia obciążenia
     RH = 80  # wilgotność powietrza zewnętrznego w procentach
@@ -156,7 +156,8 @@ def wymiarowanie(
 
     # Warunek ULS (SGN) - Ścinanie (tab. 10.2 [5])
     k = min(1 + sqrt(20 / (d / mm)), 2.0)
-    v_Rd_c = (0.18 / 1.4) * k * (100 * ro * (f_ck / MPa)) ** (1 / 3) * MPa
+    ro_v = (A_s_prov - n_2 * A_s(fi_2)) / (b * d)
+    v_Rd_c = (0.18 / 1.4) * k * (100 * ro_v * (f_ck / MPa)) ** (1 / 3) * MPa
     v_min = 0.035 * sqrt(k ** 3 * f_ck / MPa) * MPa
     v_Rd_c = max(v_Rd_c, v_min)
     V_Rd_c = v_Rd_c * b * d
