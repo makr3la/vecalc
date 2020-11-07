@@ -107,6 +107,17 @@
     <form>
         <p><h4><label>OBLICZ <input type="checkbox" value="check"></label></h4>
         <div class="check box">
+            <input type="number" name="n_k" value="1" min="1" max="2"
+            title="Ilość kratownic w płycie">
+            <small>x krat. E</small>
+            <input type="number" name="h_k" value="10" min="7" max="40"
+            title="Wysokość kratownicy">
+            <input type="number" name="fi_d" value="8" min="5" max="14"
+            title="Średnica prętów dolnych">
+            <input type="number" name="fi_k" value="5" min="5" max="7"
+            title="Średnica prętów krzyżulców">
+            <input type="number" name="fi_g" value="10" min="5" max="14"
+            title="Średnica pręta górnego"><br>
             <input type="number" step="2" name="n_1" value="2" min="0" max="8">
             # <input type="number" step="2" name="fi_1" value="8" min="6" max="14">
             <small>na całej długości w płycie</small><br>
@@ -118,17 +129,6 @@
             <small>dozbrojenie na płycie</small><br>
             # <input type="number" name="fi_r" value="6" min="4" max="8">
             <small>rozdzielcze w płycie</small><br>
-            <input type="number" name="n_k" value="1" min="1" max="2"
-            title="Ilość kratownic w płycie">
-            <small>krat. E</small>
-            <input type="number" name="h_k" value="10" min="7" max="40"
-            title="Wysokość kratownicy">
-            <input type="number" name="fi_d" value="5" min="5" max="14"
-            title="Średnica prętów dolnych">
-            <input type="number" name="fi_k" value="5" min="5" max="7"
-            title="Średnica prętów krzyżulców">
-            <input type="number" name="fi_g" value="10" min="5" max="14"
-            title="Średnica pręta górnego">
             <p><select name="bet" title="Klasa betonu prefabrykatów i nadbetonu">
                 <option value="20">Beton C20/25 (B25)</option>
                 <option value="25">Beton C25/30 (B30)</option>

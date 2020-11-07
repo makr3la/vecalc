@@ -55,13 +55,15 @@ def wymiarowanie(
     b_p = round(b / cm)  # szerokość płyty w cm
     h_p = max(45 * mm, c_nom + 2 * fi_1 + fi_r, c_nom + fi_2 + 10 * mm + fi_r)
     A_s_1 = n_1 * A_s(fi_1)
-    A_s_2 = n_2 * A_s(fi_2) + n_k * 2 * A_s(fi_d)
+    A_s_2 = n_2 * A_s(fi_2)
+    A_s_k = n_k * 2 * A_s(fi_d)
     A_s_3 = n_3 * A_s(fi_3)
-    A_s_prov = A_s_1 + A_s_2 + A_s_3
+    A_s_prov = A_s_1 + A_s_2 + A_s_k + A_s_3
     a_1 = c_nom + fi_1 / 2 + fi_r
-    a_2 = c_nom + fi_1 / 2 + fi_r
+    a_2 = c_nom + fi_2 / 2 + fi_r
+    a_k = c_nom + fi_d / 2 + fi_r
     a_3 = h_p + fi_3 / 2 + 10 * mm
-    a_mean = (A_s_1 * a_1 + A_s_2 * a_2 + A_s_3 * a_3) / A_s_prov
+    a_mean = (A_s_1 * a_1 + A_s_2 * a_2 + A_s_k * a_k + A_s_3 * a_3) / A_s_prov
     d = h - a_mean
 
     # Wkłady styropianowe (zastępcza szerokość z równości momentów bezwładności [7])
@@ -95,6 +97,7 @@ def wymiarowanie(
     f_ctm = 0.3 * (f_ck / MPa) ** (2 / 3) * MPa
     f_ctk_05 = 0.7 * f_ctm
     f_ctd = f_ctk_05 / 1.4
+    f_bd = 2.25 * f_ctd
     E_cm = 22 * (0.1 * f_cm / MPa) ** 0.3 * GPa
     h_0 = h / mm
     fi_RH = 1 + (1 - RH / 100) / (0.1 * (h_0) ** (1 / 3))
@@ -109,6 +112,13 @@ def wymiarowanie(
     f_yd = f_yk / 1.15
     E_s = 200 * GPa
     alfa_e = E_s / E_c_eff
+    ro = A_s_prov / (b * d)
+    if alfa_e * ro <= 0.06:
+        z = 0.9 * d
+    elif alfa_e * ro <= 0.18:
+        z = 0.85 * d
+    else:
+        z = 0.8 * d
 
     # Statyka
     p_k = (g_k + q_k) / kPa  # całkowite obciążenie char. ponad ciężar własny w kN/m2
@@ -144,7 +154,6 @@ def wymiarowanie(
     A_s_req = max(
         omega * b * d * (f_cd / f_yd), 0.26 * (f_ctm / f_yk) * b * d, 0.0013 * b * d
     )
-    ro = A_s_prov / (b * d)
     if A_s_prov < A_s_req:
         warn += f"<font color=red>Zbyt mały stopień zbrojenia przekroju = {ro:.2%}.<br>"
     A_c = A_c - A_st if s == "true" else b * d
@@ -153,10 +162,23 @@ def wymiarowanie(
     M_Rd = A_s_prov * f_yd * (d - 0.5138 * ((A_s_prov * f_yd) / (b * f_cd)))
     if M_Ed > M_Rd:
         warn += "<font color=red>Warunek nośności na zginanie niespełniony.<br>"
+    if A_s_2 != 0 and A_s_3 == 0:
+        M_Rd_2 = (
+            (A_s_prov - A_s_2)
+            * f_yd
+            * (d - 0.5138 * (((A_s_prov - A_s_2) * f_yd) / (b * f_cd)))
+        )
+        sigma_sd = M_Ed / (z * A_s_prov)
+        l_b_rqd = (fi_2 / 4) * (sigma_sd / f_bd)
+        l_bd = max(l_b_rqd, 10 * fi_2, 100 * mm)
+        x = (V_Ed - sqrt(2) * sqrt(-M_Rd_2 * p + 0.5 * V_Ed ** 2)) / p - l_bd
+        l_2 = f"na {round(l_p - 2 * x / cm, -1):.0f} cm"
+    else:
+        l_2 = ""
 
     # Warunek ULS (SGN) - Ścinanie (tab. 10.2 [5])
     k = min(1 + sqrt(20 / (d / mm)), 2.0)
-    ro_v = (A_s_prov - n_2 * A_s(fi_2)) / (b * d)
+    ro_v = (A_s_prov - A_s_2) / (b * d)
     v_Rd_c = (0.18 / 1.4) * k * (100 * ro_v * (f_ck / MPa)) ** (1 / 3) * MPa
     v_min = 0.035 * sqrt(k ** 3 * f_ck / MPa) * MPa
     v_Rd_c = max(v_Rd_c, v_min)
@@ -168,12 +190,6 @@ def wymiarowanie(
 
     # Warunek ULS (SGN) - Rozwarstwienie (p. 6.2.5 [2])
     beta = 1 if f_yd * A_s_prov / (f_cd * b) < (h - h_p) else (h - h_p) / h
-    if alfa_e * ro <= 0.06:
-        z = 0.9 * d
-    elif alfa_e * ro <= 0.18:
-        z = 0.85 * d
-    else:
-        z = 0.8 * d
     b_i = n_k * b_w if s == "true" else b
     v_Ed_i = beta * V_Ed / (z * b_i)
     c, mi = 0.4, 0.7  # powierzchnie szorstkie, grabione
@@ -196,7 +212,7 @@ def wymiarowanie(
     x_I = (0.5 * b * h ** 2 + alfa_e * A_s_prov * d) / (b * h + alfa_e * A_s_prov)
     J = b * h ** 3 / 12
     J_I = J + b * h * (x_I - h / 2) ** 2 + alfa_e * A_s_prov * (d - x_I) ** 2
-    alfa_k = 5 / 48
+    alfa_k = 1 / 10  # p. 5.8.8.2(4) [2]
     alfa_I = alfa_k * (M_Ed_q * l_eff ** 2) / (E_c_eff * J_I)
     x_II = d * ((alfa_e ** 2 * ro ** 2 + 2 * alfa_e * ro) ** 0.5 - alfa_e * ro)
     J_II = b * x_II ** 3 / 3 + alfa_e * ro * b * d * (d - x_II) ** 2
@@ -209,13 +225,14 @@ def wymiarowanie(
     alfa = dzeta * alfa_II + (1 - dzeta) * alfa_I
 
     # Ugięcia od skurczu (p. 3.1.4 i p. 7.4.3 [2] oraz całe [6])
-    beta_ds_t_ts = (t - ts) / ((t - ts) + 0.04 * sqrt(h ** 3))
-    if h < 200 * mm:
-        k_h = ((0.85 - 1) * h + 0.2 * 1 - 0.1 * 0.85) / (0.2 - 0.1)
-    elif h < 300 * mm:
-        k_h = ((0.75 - 0.85) * h + 0.3 * 0.85 - 0.2 * 0.75) / (0.3 - 0.2)
-    elif h < 500 * mm:
-        k_h = ((0.7 - 0.75) * h + 0.5 * 0.75 - 0.3 * 0.7) / (0.5 - 0.3)
+    h_0 = 2 * h  # wysychanie płyty może zachodzić tylko z jednej strony
+    beta_ds_t_ts = (t - ts) / ((t - ts) + 0.04 * sqrt(h_0 ** 3))
+    if h_0 < 200 * mm:
+        k_h = ((0.85 - 1) * h_0 + 0.2 * 1 - 0.1 * 0.85) / (0.2 - 0.1)
+    elif h_0 < 300 * mm:
+        k_h = ((0.75 - 0.85) * h_0 + 0.3 * 0.85 - 0.2 * 0.75) / (0.3 - 0.2)
+    elif h_0 < 500 * mm:
+        k_h = ((0.7 - 0.75) * h_0 + 0.5 * 0.75 - 0.3 * 0.7) / (0.5 - 0.3)
     else:
         k_h = 0.7
     beta_RH = 1.55 * (1 - (RH / 100) ** 3)
@@ -238,17 +255,20 @@ def wymiarowanie(
     k_cs_I = epsilon_cs * alfa_e * S_I / J_I
     k_cs_II = epsilon_cs * alfa_e * S_II / J_II
     k_cs_m = dzeta * k_cs_II + (1 - dzeta) * k_cs_I
-    alfa_ks = 1 / 8
-    alfa_cs = alfa_ks * k_cs_m * l_eff ** 2
+    alfa_cs = k_cs_m * l_eff ** 2 / 8
 
     # Wpływ kratownicy na zmniejszenie ugięcia (p. 8 [3])
     y_g = h_k - fi_g / 2
     y_d = (2 * fi_d + n_2 * fi_2) / (2 + n_2)
-    y = (n_k * A_s(fi_g) * y_g + A_s_2 * y_d) / (n_k * A_s(fi_g) + A_s_2)
+    y = (n_k * A_s(fi_g) * y_g + (A_s_2 + A_s_k) * y_d) / (
+        n_k * A_s(fi_g) + (A_s_2 + A_s_k)
+    )
     I_g = pi * sqrt(n_k * A_s(fi_g) / pi) ** 4 / 64
-    I_d = pi * sqrt(A_s_2 / pi) ** 4 / 64
-    I_k = I_g + I_d + n_k * A_s(fi_g) * (y_g - y) ** 2 + A_s_2 * (y_d - y) ** 2
-    gamma_k = max(1 - 0.9 * E_s * I_k / (E_c_eff * (b * h ** 3 / 12)), 0.85)
+    I_d = pi * sqrt((A_s_2 + A_s_k) / pi) ** 4 / 64
+    I_k = (
+        I_g + I_d + n_k * A_s(fi_g) * (y_g - y) ** 2 + (A_s_2 + A_s_k) * (y_d - y) ** 2
+    )
+    gamma_k = max(1 - 0.9 * E_s * I_k / (E_c_eff * J), 0.85)
 
     # Warunek SLS (SGU) - Sprawdzenie ugięć (p. 7.4.1 [2])
     alfa_0 = l_eff / 300  # odwrotna strzałka ugięcia (p. 8 [3])
@@ -275,16 +295,26 @@ def wymiarowanie(
         warn += "<font color=orange>Dopuszczalne rysy przekroczone.<br>"
 
     # Notka
-    s_r = min(40 * cm, m / (0.2 * A_s_req / (b_p * cm) / A_s(fi_r)))
+    s_r = min(3 * h, 40 * cm, m / (0.2 * A_s_req / (b_p * cm) / A_s(fi_r)))
+    s_r = 5 * cm * round(s_r / (5 * cm))
+    siatki = [131, 188, 283, 335, 503]
+    A_s_s = min(s for s in siatki if s > ((0.25 * A_s_req) / (b_p * cm) / mm2))
     return (
         (
-            f"<h4><mark>PŁYTA {h / cm:.0f}{'s' if s == 'true' else ''} L={l_p} "
-            f"W={b_p} ({p_k:.1f} kN/m2)<br>zbroj. {n_1}#{fi_1 / mm:.0f} "
-            f"{f'+ {n_2}#{fi_2 / mm:.0f}' if n_2 != 0 else ''}<br></mark>"
-            f"{f'dozbrojenie na płycie {n_3}#{fi_3 / mm:.0f}<br>' if n_3 != 0 else ''}"
-            f"rozdzielcze #{fi_r / mm:.0f} co {s_r / cm:.0f} cm <br>"
-            f"{n_k} krat. E {h_k / cm:.0f} "
-            f"{int(fi_d / mm):02d}{fi_k / mm:.0f}{int(fi_g / mm):02d}</h4>"
+            f"<h4><mark>PŁYTA {h / cm:.0f}{'s' if s == 'true' else ''} L={l_p} W={b_p} "
+            f"({p_k:.1f} kN/m2)<br>zbroj. {f'{n_k}x' if n_k > 1 else ''}"
+            f"{A_s_prov / n_k / cm2:.2f} cm2<br></mark></h4>"
+            f"{n_k}<small>x krat.</small> E-{h_k / cm:.0f}-"
+            f"{int(fi_d / mm):02d}{fi_k / mm:.0f}{int(fi_g / mm):02d}<br>"
+            f"{n_1}#{fi_1 / mm:.0f} <small>na całej długości w płycie</small><br>"
+            f"{f'{n_2}#{fi_2 / mm:.0f} {l_2} ' if n_2 != 0 else ''}"
+            f"{'<small>dospawane do kratownicy</small><br>' if n_2 != 0 else ''}"
+            f"{f'{n_3}#{fi_3 / mm:.0f} ' if n_3 != 0 else ''}"
+            f"{'<small>dozbrojenie na płycie</small><br>' if n_3 != 0 else ''}"
+            f"#{fi_r / mm:.0f} co {s_r / cm:.0f} cm "
+            f"<small>rozdzielcze w płycie</small><br>"
+            f"{f'Q{A_s_s} na {ceil(l / cm / 7 / 5) * 5} cm ' if l >= 4 else ''}"
+            f"{'<small>nadpodporowe</small>' if l >= 4 else ''}"
             f"<p><h4>WYMIAROWANIE WG EUROKODÓW</h4><br>"
             f"A<sub>s</sub> = {A_s_prov / cm2:.2f} cm&#178; "
             f"({A_s_prov / (b_p * cm) / mm2:.0f} mm&#178;/m) &rho; = {ro:.2%}<br>"
