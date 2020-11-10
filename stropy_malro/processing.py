@@ -297,7 +297,7 @@ def wymiarowanie(
     # Notka
     s_r = min(3 * h, 40 * cm, m / (0.2 * A_s_req / (b_p * cm) / A_s(fi_r)))
     s_r = 5 * cm * round(s_r / (5 * cm))
-    siatki = [131, 188, 283, 335, 503]
+    siatki = [131, 188, 283]
     A_s_s = min(s for s in siatki if s > ((0.25 * A_s_req) / (b_p * cm) / mm2))
     return (
         (
@@ -313,7 +313,7 @@ def wymiarowanie(
             f"{'<small>dozbrojenie na płycie</small><br>' if n_3 != 0 else ''}"
             f"#{fi_r / mm:.0f} co {s_r / cm:.0f} cm "
             f"<small>rozdzielcze w płycie</small><br>"
-            f"{f'Q{A_s_s} na {ceil(l / cm / 7 / 5) * 5} cm ' if l >= 4 else ''}"
+            f"{f'Q{A_s_s} szer. {ceil(l / cm / 7 / 5) * 5 + 20} cm ' if l >= 4 else ''}"
             f"{'<small>nadpodporowe</small>' if l >= 4 else ''}"
             f"<p><h4>WYMIAROWANIE WG EUROKODÓW</h4><br>"
             f"A<sub>s</sub> = {A_s_prov / cm2:.2f} cm&#178; "
