@@ -62,7 +62,7 @@ def wymiarowanie(
     a_1 = c_nom + fi_1 / 2 + fi_r
     a_2 = c_nom + fi_2 / 2 + fi_r
     a_k = c_nom + fi_d / 2 + fi_r
-    a_3 = h_p + fi_3 / 2 + 10 * mm
+    a_3 = h_p + fi_3 / 2
     a_mean = (A_s_1 * a_1 + A_s_2 * a_2 + A_s_k * a_k + A_s_3 * a_3) / A_s_prov
     d = h - a_mean
 
@@ -297,7 +297,7 @@ def wymiarowanie(
     # Notka
     s_r = min(3 * h, 40 * cm, m / (0.2 * A_s_req / (b_p * cm) / A_s(fi_r)))
     s_r = 5 * cm * round(s_r / (5 * cm))
-    siatki = [131, 188, 283]
+    siatki = [188, 283]
     A_s_s = min(s for s in siatki if s > ((0.25 * A_s_req) / (b_p * cm) / mm2))
     return (
         (
