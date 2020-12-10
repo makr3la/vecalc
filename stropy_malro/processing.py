@@ -297,7 +297,7 @@ def wymiarowanie(
     # Notka
     s_r = min(3 * h, 40 * cm, m / (0.2 * A_s_req / (b_p * cm) / A_s(fi_r)))
     s_r = 5 * cm * round(s_r / (5 * cm))
-    siatki = [188, 283]
+    siatki = [188, 283, 503]
     A_s_s = min(s for s in siatki if s > ((0.25 * A_s_req) / (b_p * cm) / mm2))
     return (
         (
