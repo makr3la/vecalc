@@ -17,7 +17,7 @@ def _dobierz():
     h = float(request.args.get("h")) * p.cm
     s = request.args.get("s")
     b_p = round(b / p.cm)
-    n_k = ceil(b_p / 60)
+    n_k = 1 if b_p <= 60 else max(ceil(b_p / 80), 2)
     types = [  # n_2, fi_2
         (0, 0),
         (1 * n_k, 8),
