@@ -33,6 +33,7 @@ def wymiarowanie(
     fi_2: float,
     fi_3: float,
     fi_r: float,
+    r: str,
     n_k: int,
     h_k: float,
     fi_d: float,
@@ -48,7 +49,9 @@ def wymiarowanie(
     warn = ""
 
     # Otulina, przyjęte zbrojenie i wysokość użyteczna (p. 4.4 [2])
-    c_min_b = max(fi_1, fi_2) - fi_r
+    c_min_b = max(fi_1, fi_2)
+    if r == "false":
+        c_min_b -= fi_r
     c_min = max(c_min_b, c_min_dur, 10 * mm)
     c_nom = c_min + delta_c_dev
     l_p = (ceil(round(l + 12 * cm, 3) / cm / 10)) * 10  # długość płyty w cm
@@ -59,9 +62,11 @@ def wymiarowanie(
     A_s_k = n_k * 2 * A_s(fi_d)
     A_s_3 = n_3 * A_s(fi_3)
     A_s_prov = A_s_1 + A_s_2 + A_s_k + A_s_3
-    a_1 = c_nom + fi_1 / 2 + fi_r
-    a_2 = c_nom + fi_2 / 2 + fi_r
-    a_k = c_nom + fi_d / 2 + fi_r
+    a_1 = c_nom + fi_1 / 2
+    a_2 = c_nom + fi_2 / 2
+    a_k = c_nom + fi_d / 2
+    if r == "false":
+        a_1, a_2, a_k = a_1 + fi_r, a_2 + fi_r, a_k + fi_r
     a_3 = h_p + fi_3 / 2
     a_mean = (A_s_1 * a_1 + A_s_2 * a_2 + A_s_k * a_k + A_s_3 * a_3) / A_s_prov
     d = h - a_mean
@@ -312,7 +317,8 @@ def wymiarowanie(
             f"{f'{n_3}#{fi_3 / mm:.0f} ' if n_3 != 0 else ''}"
             f"{'<small>dozbrojenie na płycie</small><br>' if n_3 != 0 else ''}"
             f"#{fi_r / mm:.0f} co {s_r / cm:.0f} cm "
-            f"<small>rozdzielcze w płycie</small><br>"
+            f"<small>rozdzielcze w płycie "
+            f"{'dołem</small><br>' if r == 'false' else 'górą</small><br>'}"
             f"{f'Q{A_s_s} szer. {ceil(l / cm / 7 / 5) * 5 + 20} cm ' if l >= 4 else ''}"
             f"{'<small>nadpodporowe</small>' if l >= 4 else ''}"
             f"<p><h4>WYMIAROWANIE WG EUROKODÓW</h4><br>"

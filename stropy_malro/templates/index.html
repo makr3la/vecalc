@@ -43,6 +43,7 @@
                     fi_2: $('input[name="fi_2"]').val(),
                     fi_3: $('input[name="fi_3"]').val(),
                     fi_r: $('input[name="fi_r"]').val(),
+                    r: $('input[name="r"]').is(':checked'),
                     n_k: $('input[name="n_k"]').val(),
                     h_k: $('input[name="h_k"]').val(),
                     fi_d: $('input[name="fi_d"]').val(),
@@ -107,6 +108,12 @@
     <form>
         <p><h4><label>OBLICZ <input type="checkbox" value="check"></label></h4>
         <div class="check box">
+            <p><select name="bet" title="Klasa betonu prefabrykatów i nadbetonu">
+                <option value="20">Beton C20/25 (B25)</option>
+                <option value="25">Beton C25/30 (B30)</option>
+                <option value="30">Beton C30/37 (B37)</option>
+            </select><br>
+            <p><h4>ZBROJENIE</h4><br>
             <input type="number" name="n_k" value="1" min="1" max="5"
             title="Ilość kratownic w płycie">
             <small>x krat. E</small>
@@ -128,19 +135,18 @@
             # <input type="number" step="2" name="fi_3" value="8" min="6" max="14">
             <small>dozbrojenie na płycie</small><br>
             # <input type="number" name="fi_r" value="6" min="4" max="8">
-            <small>rozdzielcze w płycie</small><br>
-            <p><select name="bet" title="Klasa betonu prefabrykatów i nadbetonu">
-                <option value="20">Beton C20/25 (B25)</option>
-                <option value="25">Beton C25/30 (B30)</option>
-                <option value="30">Beton C30/37 (B37)</option>
-            </select><br>
+            <small>rozdzielcze w płycie
+            <input type="checkbox" id="r" name="r">
+            <label for="r"> górą</label></small>
+            <p><h4>OTULINA</h4><br>
             c<sub>min,dur</sub> =
             <input type="number" step="5" name="c_min_dur" value="10" min="10" max="20"
             title="Otulenie ze względu na trwałość stali zbrojeniowej"> mm<br>
             &Delta;c<sub>dev</sub> =
             <input type="number" step="5" name="delta_c_dev" value="5" min="0" max="10"
             title="Odchyłka otulenia"> mm
-            <p>b<sub>w</sub> =
+            <p><h4>WKŁADY STYROPIANOWE</h4><br>
+            b<sub>w</sub> =
             <input type="number" name="b_w" value="16" min="10"
             title="Odstęp pomiędzy licami wkładów styropianowych"> cm<br>
             h<sub>st</sub> =
