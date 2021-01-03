@@ -176,7 +176,10 @@ def wymiarowanie(
         sigma_sd = M_Ed / (z * A_s_prov)
         l_b_rqd = (fi_2 / 4) * (sigma_sd / f_bd)
         l_bd = max(l_b_rqd, 10 * fi_2, 100 * mm)
-        x = (V_Ed - sqrt(2) * sqrt(-M_Rd_2 * p + 0.5 * V_Ed ** 2)) / p - l_bd
+        try:
+            x = (V_Ed - sqrt(2) * sqrt(-M_Rd_2 * p + 0.5 * V_Ed ** 2)) / p - l_bd
+        except ValueError:
+            x = 0
         l_2 = f"na {round(l_p - 2 * x / cm, -1):.0f} cm"
     else:
         l_2 = ""
