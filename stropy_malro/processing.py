@@ -54,7 +54,7 @@ def wymiarowanie(
         c_min_b -= fi_r
     c_min = max(c_min_b, c_min_dur, 10 * mm)
     c_nom = c_min + delta_c_dev
-    l_p = (ceil(round(l + 12 * cm, 3) / cm / 10)) * 10  # długość płyty w cm
+    l_p = ceil((l / cm + 10) / 10) * 10 + 2  # długość płyty w cm
     b_p = round(b / cm)  # szerokość płyty w cm
     h_p = max(45 * mm, c_nom + 2 * fi_1 + fi_r, c_nom + fi_2 + 10 * mm + fi_r)
     A_s_1 = n_1 * A_s(fi_1)
