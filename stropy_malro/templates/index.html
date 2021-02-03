@@ -50,8 +50,7 @@
                     fi_k: $('input[name="fi_k"]').val(),
                     fi_g: $('input[name="fi_g"]').val(),
                     bet: $('select[name="bet"]').val(),
-                    c_min_dur: $('input[name="c_min_dur"]').val(),
-                    delta_c_dev: $('input[name="delta_c_dev"]').val(),
+                    c_nom: $('input[name="c_nom"]').val(),
                     b_w: $('input[name="b_w"]').val(),
                     h_st: $('input[name="h_st"]').val(),
                 }, function(data) {
@@ -139,12 +138,9 @@
             <input type="checkbox" id="r" name="r">
             <label for="r"> górą</label></small>
             <p><h4>OTULINA</h4><br>
-            c<sub>min,dur</sub> =
-            <input type="number" step="5" name="c_min_dur" value="10" min="10" max="20"
-            title="Otulenie ze względu na trwałość stali zbrojeniowej"> mm<br>
-            &Delta;c<sub>dev</sub> =
-            <input type="number" step="5" name="delta_c_dev" value="5" min="0" max="10"
-            title="Odchyłka otulenia"> mm
+            c<sub>nom</sub> =
+            <input type="number" step="5" name="c_nom" value="15" min="0" max="35"
+            title="Nominalne otulenie betonem zbrojenia"> mm<br>
             <p><h4>WKŁADY STYROPIANOWE</h4><br>
             b<sub>w</sub> =
             <input type="number" name="b_w" value="16" min="10"

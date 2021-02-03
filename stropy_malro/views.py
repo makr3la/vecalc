@@ -52,8 +52,7 @@ def _dobierz():
                 fi_k=5 * p.mm,
                 fi_g=10 * p.mm,
                 bet="20",
-                c_min_dur=10 * p.mm,
-                delta_c_dev=5 * p.mm,
+                c_nom=15 * p.mm,
                 b_w=16 * p.cm,
                 h_st=(h_st * p.cm if s == "true" else 0),
             )
@@ -91,8 +90,7 @@ def _oblicz():
                 fi_k=float(request.args.get("fi_k")) * p.mm,
                 fi_g=float(request.args.get("fi_g")) * p.mm,
                 bet=request.args.get("bet"),
-                c_min_dur=float(request.args.get("c_min_dur")) * p.mm,
-                delta_c_dev=float(request.args.get("delta_c_dev")) * p.mm,
+                c_nom=float(request.args.get("c_nom")) * p.mm,
                 b_w=float(request.args.get("b_w")) * p.cm,
                 h_st=float(request.args.get("h_st")) * p.cm,
             )

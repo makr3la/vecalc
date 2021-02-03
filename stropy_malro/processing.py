@@ -40,8 +40,7 @@ def wymiarowanie(
     fi_k: float,
     fi_g: float,
     bet: str,
-    c_min_dur: float,
-    delta_c_dev: float,
+    c_nom: float,
     b_w: float,
     h_st: float,
 ) -> (str, str):
@@ -52,11 +51,15 @@ def wymiarowanie(
     c_min_b = max(fi_1, fi_2)
     if r == "false":
         c_min_b -= fi_r
-    c_min = max(c_min_b, c_min_dur, 10 * mm)
-    c_nom = c_min + delta_c_dev
+    if c_nom < c_min_b:
+        warn += f"<font color=orange>Zbyt małe otulenie ze względu na przyczepność.<br>"
+    if c_nom < 10 * mm:  # klasa konstrukcji S4 (-1 - płyta) i klasa ekspozycji XC1
+        warn += f"<font color=orange>Zbyt małe otulenie ze względu na trwałość.<br>"
     l_p = ceil((l / cm + 10) / 10) * 10 + 2  # długość płyty w cm
     b_p = round(b / cm)  # szerokość płyty w cm
     h_p = max(45 * mm, c_nom + 2 * fi_1 + fi_r, c_nom + fi_2 + 10 * mm + fi_r)
+    if h_p > 45 * mm:
+        warn += f"<font color=orange>Minimalna grubość płyty {h_p / mm:.0f} mm.<br>"
     A_s_1 = n_1 * A_s(fi_1)
     A_s_2 = n_2 * A_s(fi_2)
     A_s_k = n_k * 2 * A_s(fi_d)
@@ -323,7 +326,8 @@ def wymiarowanie(
             f"<small>rozdzielcze w płycie "
             f"{'dołem</small><br>' if r == 'false' else 'górą</small><br>'}"
             f"{f'Q{A_s_s} szer. {ceil(l / cm / 7 / 5) * 5 + 20} cm ' if l >= 4 else ''}"
-            f"{'<small>nadpodporowe</small>' if l >= 4 else ''}"
+            f"{'<small>nadpodporowe</small><br>' if l >= 4 else ''}"
+            f"{c_nom / mm:.0f} mm <small>nominalne otulenie</small><br>"
             f"<p><h4>WYMIAROWANIE WG EUROKODÓW</h4><br>"
             f"A<sub>s</sub> = {A_s_prov / cm2:.2f} cm&#178; "
             f"({A_s_prov / (b_p * cm) / mm2:.0f} mm&#178;/m) &rho; = {ro:.2%}<br>"
